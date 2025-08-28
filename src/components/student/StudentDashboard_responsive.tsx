@@ -463,9 +463,7 @@ const StudentDashboard = () => {
       <div style={{ padding: '2rem' }}>
         <ToolbarComponent 
           title="Simulacros" 
-          showNewButton={true}
-          newButtonText="Nuevo Simulacro"
-          onNewClick={() => console.log('Crear nuevo simulacro')}
+          showNewButton={false}
         />
 
         {/* Estadísticas de simulacros */}

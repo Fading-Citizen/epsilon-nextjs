@@ -15,6 +15,7 @@ interface Student {
   courses: string[];
   progress: number;
   lastActivity: string;
+  teacherId?: string; // Afiliación a profesor
 }
 
 interface Group {
@@ -29,6 +30,13 @@ interface StudentManagerProps {
   onNavigateToGroups?: () => void;
 }
 
+// Lista mock de profesores (TODO: reemplazar con query a Supabase)
+const TEACHERS = [
+  { id: 't1', name: 'Prof. Juan Pérez' },
+  { id: 't2', name: 'Prof. Laura Martínez' },
+  { id: 't3', name: 'Prof. Carlos Ruiz' }
+];
+
 const StudentManager: React.FC<StudentManagerProps> = ({ onBack, onNavigateToGroups }) => {
   const [students, setStudents] = useState<Student[]>([
     {
@@ -41,7 +49,8 @@ const StudentManager: React.FC<StudentManagerProps> = ({ onBack, onNavigateToGro
       groups: ['premium', 'matematicas-avanzado'],
       courses: ['Cálculo Diferencial', 'Álgebra Lineal'],
       progress: 85,
-      lastActivity: '2025-08-27'
+      lastActivity: '2025-08-27',
+      teacherId: 't1'
     },
     {
       id: '2',
@@ -53,7 +62,8 @@ const StudentManager: React.FC<StudentManagerProps> = ({ onBack, onNavigateToGro
       groups: ['basico', 'fisica-general'],
       courses: ['Física Básica', 'Matemáticas Fundamentales'],
       progress: 62,
-      lastActivity: '2025-08-26'
+      lastActivity: '2025-08-26',
+      teacherId: 't2'
     },
     {
       id: '3',
@@ -64,7 +74,8 @@ const StudentManager: React.FC<StudentManagerProps> = ({ onBack, onNavigateToGro
       groups: ['premium'],
       courses: ['Química Orgánica'],
       progress: 45,
-      lastActivity: '2025-08-20'
+      lastActivity: '2025-08-20',
+      teacherId: 't1'
     }
   ]);
 
@@ -81,14 +92,16 @@ const StudentManager: React.FC<StudentManagerProps> = ({ onBack, onNavigateToGro
   const [statusFilter, setStatusFilter] = useState('all');
   const [groupFilter, setGroupFilter] = useState('all');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [teacherFilter, setTeacherFilter] = useState('all');
 
   const filteredStudents = students.filter(student => {
     const matchesSearch = student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          student.email.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === 'all' || student.status === statusFilter;
-    const matchesGroup = groupFilter === 'all' || student.groups.includes(groupFilter);
+  const matchesGroup = groupFilter === 'all' || student.groups.includes(groupFilter);
+  const matchesTeacher = teacherFilter === 'all' || student.teacherId === teacherFilter;
     
-    return matchesSearch && matchesStatus && matchesGroup;
+  return matchesSearch && matchesStatus && matchesGroup && matchesTeacher;
   });
 
   const createNewStudent = () => {
@@ -117,8 +130,9 @@ const StudentManager: React.FC<StudentManagerProps> = ({ onBack, onNavigateToGro
         status: 'active',
         groups: [],
         courses: [],
-        progress: 0,
-        lastActivity: new Date().toISOString().split('T')[0],
+  progress: 0,
+  lastActivity: new Date().toISOString().split('T')[0],
+  teacherId: (studentData as Student).teacherId || undefined,
         ...studentData
       } as Student;
       setStudents(prev => [...prev, newStudent]);
@@ -173,7 +187,8 @@ const StudentManager: React.FC<StudentManagerProps> = ({ onBack, onNavigateToGro
         phone: '',
         status: 'active',
         groups: [],
-        courses: []
+  courses: [],
+  teacherId: TEACHERS[0].id
       }
     );
 
@@ -254,6 +269,15 @@ const StudentManager: React.FC<StudentManagerProps> = ({ onBack, onNavigateToGro
                 <option value="active">Activo</option>
                 <option value="inactive">Inactivo</option>
                 <option value="suspended">Suspendido</option>
+              </select>
+            </div>
+            <div className={styles.formGroup}>
+              <label>Profesor Asignado</label>
+              <select
+                value={formData.teacherId || ''}
+                onChange={(e) => setFormData(prev => ({ ...prev, teacherId: e.target.value }))}
+              >
+                {TEACHERS.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
               </select>
             </div>
           </div>
@@ -407,6 +431,15 @@ const StudentManager: React.FC<StudentManagerProps> = ({ onBack, onNavigateToGro
         </select>
 
         <select
+          value={teacherFilter}
+          onChange={(e) => setTeacherFilter(e.target.value)}
+          className={styles.filterSelect}
+        >
+          <option value="all">Todos los profesores</option>
+          {TEACHERS.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+        </select>
+
+        <select
           value={groupFilter}
           onChange={(e) => setGroupFilter(e.target.value)}
           className={styles.filterSelect}
@@ -469,6 +502,12 @@ const StudentManager: React.FC<StudentManagerProps> = ({ onBack, onNavigateToGro
                       {getStatusLabel(student.status)}
                     </span>
                   </div>
+                  {student.teacherId && (
+                    <div className={styles.metaItem}>
+                      <Shield size={12} />
+                      <span>{TEACHERS.find(t => t.id === student.teacherId)?.name || 'Profesor'}</span>
+                    </div>
+                  )}
                 </div>
 
                 <div className={styles.studentGroups}>
@@ -562,6 +601,13 @@ const StudentManager: React.FC<StudentManagerProps> = ({ onBack, onNavigateToGro
                   }}>
                     {getStatusLabel(student.status)}
                   </span>
+                </div>
+                <div style={{ textAlign: 'center', maxWidth: 120 }}>
+                  {student.teacherId && (
+                    <span style={{ fontSize: '0.65rem', color: 'var(--text-secondary)' }}>
+                      {TEACHERS.find(t => t.id === student.teacherId)?.name}
+                    </span>
+                  )}
                 </div>
                 <div className={styles.studentActions}>
                   <button 

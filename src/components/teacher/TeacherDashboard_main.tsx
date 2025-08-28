@@ -40,6 +40,7 @@ import QuizBuilder from './QuizBuilder';
 import LiveClassesManager from './LiveClassesManager';
 import StudentsManager from './StudentsManager';
 import GroupManager from './GroupManager';
+import TeacherChatCenter from './TeacherChatCenter';
 
 interface TeacherDashboardProps {
   user: SupabaseUser;
@@ -970,45 +971,7 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ user: currentUser }
           </div>
         );
       case 'messages':
-        return (
-          <div>
-            <div style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              marginBottom: '2rem'
-            }}>
-              <h2 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 'bold', color: theme.colors.current.text.primary }}>Centro de Mensajes</h2>
-              <button style={{
-                background: 'rgba(34, 197, 94, 0.2)',
-                border: '1px solid rgba(34, 197, 94, 0.3)',
-                borderRadius: '8px',
-                padding: '0.75rem 1.5rem',
-                color: '#22c55e',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.5rem',
-                fontWeight: '600'
-              }}>
-                <Plus size={20} />
-                Nuevo Mensaje
-              </button>
-            </div>
-
-            <div style={{
-              background: isDarkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.02)',
-              border: `1px solid ${isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'}`,
-              borderRadius: '12px',
-              padding: '2rem',
-              textAlign: 'center'
-            }}>
-              <MessageSquare size={48} style={{ color: theme.colors.current.text.secondary, marginBottom: '1rem' }} />
-              <h3 style={{ color: theme.colors.current.text.primary, marginBottom: '0.5rem' }}>Centro de Mensajes</h3>
-              <p style={{ color: theme.colors.current.text.secondary }}>Funcionalidad en desarrollo</p>
-            </div>
-          </div>
-        );
+        return <TeacherChatCenter teacherId={currentUser.id} />;
       case 'profile':
         return (
           <div>

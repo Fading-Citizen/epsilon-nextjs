@@ -14,6 +14,7 @@ interface Group {
   permissions: string[];
   createdAt: string;
   isActive: boolean;
+  teacherId?: string; // Profesor responsable
 }
 
 interface Permission {
@@ -28,6 +29,13 @@ interface GroupManagerProps {
   onNavigateToStudents?: () => void;
 }
 
+// Lista mock de profesores (TODO: reemplazar con datos reales)
+const TEACHERS = [
+  { id: 't1', name: 'Prof. Juan Pérez' },
+  { id: 't2', name: 'Prof. Laura Martínez' },
+  { id: 't3', name: 'Prof. Carlos Ruiz' }
+];
+
 const GroupManager: React.FC<GroupManagerProps> = ({ onBack, onNavigateToStudents }) => {
   const [groups, setGroups] = useState<Group[]>([
     {
@@ -39,7 +47,8 @@ const GroupManager: React.FC<GroupManagerProps> = ({ onBack, onNavigateToStudent
       courseCount: 12,
       permissions: ['full_access', 'live_classes', 'priority_support', 'advanced_content'],
       createdAt: '2025-01-15',
-      isActive: true
+      isActive: true,
+      teacherId: 't1'
     },
     {
       id: '2',
@@ -61,7 +70,8 @@ const GroupManager: React.FC<GroupManagerProps> = ({ onBack, onNavigateToStudent
       courseCount: 8,
       permissions: ['advanced_content', 'live_classes', 'peer_collaboration'],
       createdAt: '2025-02-01',
-      isActive: true
+      isActive: true,
+      teacherId: 't2'
     },
     {
       id: '4',
@@ -137,6 +147,7 @@ const GroupManager: React.FC<GroupManagerProps> = ({ onBack, onNavigateToStudent
         permissions: [],
         createdAt: new Date().toISOString().split('T')[0],
         isActive: true,
+        teacherId: (groupData as Group).teacherId || TEACHERS[0].id,
         ...groupData
       } as Group;
       setGroups(prev => [...prev, newGroup]);
@@ -173,7 +184,8 @@ const GroupManager: React.FC<GroupManagerProps> = ({ onBack, onNavigateToStudent
         description: '',
         color: colorOptions[0],
         permissions: [],
-        isActive: true
+  isActive: true,
+  teacherId: TEACHERS[0].id
       }
     );
 
@@ -250,6 +262,15 @@ const GroupManager: React.FC<GroupManagerProps> = ({ onBack, onNavigateToStudent
               >
                 <option value="true">Activo</option>
                 <option value="false">Inactivo</option>
+              </select>
+            </div>
+            <div className={styles.formGroup}>
+              <label>Profesor Responsable</label>
+              <select
+                value={formData.teacherId || ''}
+                onChange={(e) => setFormData(prev => ({ ...prev, teacherId: e.target.value }))}
+              >
+                {TEACHERS.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
               </select>
             </div>
           </div>
@@ -477,6 +498,19 @@ const GroupManager: React.FC<GroupManagerProps> = ({ onBack, onNavigateToStudent
                   <span className={styles.statLabel}>Cursos</span>
                 </div>
               </div>
+
+              {group.teacherId && (
+                <div style={{
+                  fontSize: '0.7rem',
+                  color: 'var(--text-secondary)',
+                  margin: '0.25rem 0 0.75rem 0',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.4rem'
+                }}>
+                  <Shield size={12} /> {TEACHERS.find(t => t.id === group.teacherId)?.name || 'Profesor'}
+                </div>
+              )}
 
               <div className={styles.groupPermissions}>
                 <div style={{ 
