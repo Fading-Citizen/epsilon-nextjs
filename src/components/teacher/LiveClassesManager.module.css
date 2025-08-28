@@ -1,0 +1,369 @@
+/* CSS Module for Live Classes Manager */
+.liveClassesManager {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  padding: 2rem;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.headerLeft h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: var(--text-primary);
+}
+
+.headerLeft p {
+  margin: 0.5rem 0 0 0;
+  color: var(--text-secondary);
+}
+
+.headerActions {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.actionBtn {
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.2s ease;
+}
+
+.actionBtn.primary {
+  background: linear-gradient(135deg, #3b82f6, #1e40af);
+  color: white;
+}
+
+.actionBtn.primary:hover {
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+  transform: translateY(-1px);
+}
+
+.actionBtn.secondary {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+}
+
+.actionBtn.secondary:hover {
+  background: var(--bg-tertiary);
+  transform: translateY(-1px);
+}
+
+.filterBar {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  flex-wrap: wrap;
+  padding: 1rem;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+
+.searchInput {
+  flex: 1;
+  min-width: 200px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.75rem;
+  color: var(--text-primary);
+  font-size: 0.875rem;
+}
+
+.searchInput::placeholder {
+  color: var(--text-secondary);
+}
+
+.filterSelect {
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.75rem;
+  color: var(--text-primary);
+  font-size: 0.875rem;
+  min-width: 120px;
+}
+
+.liveClassesGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 1.5rem;
+}
+
+.liveClassCard {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1.5rem;
+  transition: all 0.2s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.liveClassCard:hover {
+  background: var(--bg-tertiary);
+  transform: translateY(-2px);
+}
+
+.liveClassCard.live {
+  border-color: #ef4444;
+  box-shadow: 0 0 20px rgba(239, 68, 68, 0.3);
+}
+
+.liveClassCard.live::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #ef4444, #dc2626);
+}
+
+.liveIndicator {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: #ef4444;
+  color: white;
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.liveDot {
+  width: 6px;
+  height: 6px;
+  background: white;
+  border-radius: 50%;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.classHeader {
+  margin-bottom: 1rem;
+}
+
+.classTitle {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.classSubject {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+}
+
+.classDateTime {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 1rem 0;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+}
+
+.classStats {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 1rem 0;
+  padding: 0.75rem;
+  background: var(--bg-primary);
+  border-radius: 8px;
+}
+
+.statItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.statNumber {
+  font-size: 1.25rem;
+  font-weight: bold;
+  color: var(--text-primary);
+}
+
+.statLabel {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.classActions {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.classAction {
+  flex: 1;
+  padding: 0.75rem;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  transition: all 0.2s ease;
+  font-size: 0.875rem;
+}
+
+.classAction.start {
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: white;
+}
+
+.classAction.start:hover {
+  background: linear-gradient(135deg, #059669, #047857);
+}
+
+.classAction.join {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  color: white;
+}
+
+.classAction.join:hover {
+  background: linear-gradient(135deg, #dc2626, #b91c1c);
+}
+
+.classAction.edit {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+}
+
+.classAction.edit:hover {
+  background: var(--bg-primary);
+}
+
+.emptyState {
+  text-align: center;
+  padding: 3rem;
+  color: var(--text-secondary);
+}
+
+.emptyState svg {
+  margin-bottom: 1rem;
+}
+
+.emptyState h3 {
+  margin: 1rem 0 0.5rem 0;
+  color: var(--text-primary);
+}
+
+.emptyState p {
+  margin: 0;
+}
+
+.liveClassEditor {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 2rem;
+  margin-bottom: 2rem;
+}
+
+.editorHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.editorHeader h3 {
+  margin: 0;
+  color: var(--text-primary);
+}
+
+.editorActions {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.formGroup {
+  margin-bottom: 1.5rem;
+}
+
+.formGroup label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.formGroup input,
+.formGroup textarea,
+.formGroup select {
+  width: 100%;
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.75rem;
+  color: var(--text-primary);
+  font-size: 0.875rem;
+}
+
+.formGroup input::placeholder,
+.formGroup textarea::placeholder {
+  color: var(--text-secondary);
+}
+
+.formRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+@media (max-width: 768px) {
+  .formRow {
+    grid-template-columns: 1fr;
+  }
+  
+  .liveClassesGrid {
+    grid-template-columns: 1fr;
+  }
+  
+  .filterBar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .headerActions {
+    flex-direction: column;
+  }
+}
