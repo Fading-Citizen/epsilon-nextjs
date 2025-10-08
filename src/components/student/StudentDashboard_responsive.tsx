@@ -5,6 +5,7 @@ import { User, Bell, BookOpen, Award, TrendingUp, Calendar, Sun, Moon, LogOut, S
 import { useTheme } from '@/themes/ThemeContext';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { useRouter } from 'next/navigation';
+import SimulacroViewer from './SimulacroViewer';
 
 const StudentDashboard = () => {
   const [currentPage, setCurrentPage] = useState('dashboard');
@@ -25,6 +26,16 @@ const StudentDashboard = () => {
   const [currentLiveClass, setCurrentLiveClass] = useState<any>(null);
   const [isMicOn, setIsMicOn] = useState(false);
   const [isCameraOn, setIsCameraOn] = useState(false);
+  
+  // Estados para SimulacroViewer
+  const [activeSimulacro, setActiveSimulacro] = useState<any>(null);
+  const [showSimulacroViewer, setShowSimulacroViewer] = useState(false);
+  const [userSubscription, setUserSubscription] = useState({
+    plan: 'free' as 'free' | 'basic' | 'premium' | 'enterprise',
+    simulacrosUsados: 3,
+    simulacrosMaximos: 5,
+    renovacionMes: '2025-02-01'
+  });
   
   const { isDarkMode, toggleTheme, theme } = useTheme();
   const { user, signOut } = useAuth();
@@ -103,6 +114,52 @@ const StudentDashboard = () => {
     } catch (e) {
       console.error('Error al cerrar sesión', e);
     }
+  };
+
+  // Funciones auxiliares para Simulacros
+  const canAccessSimulacro = (simulacro: any) => {
+    // Simulacros de muestra siempre son accesibles
+    if (simulacro.isSample) return true;
+    
+    // Plan premium o enterprise tienen acceso ilimitado
+    if (userSubscription.plan === 'premium' || userSubscription.plan === 'enterprise') {
+      return true;
+    }
+    
+    // Plan free: verificar si no ha excedido el límite
+    if (userSubscription.plan === 'free') {
+      return userSubscription.simulacrosUsados < userSubscription.simulacrosMaximos;
+    }
+    
+    // Plan basic: verificar límite de 20
+    if (userSubscription.plan === 'basic') {
+      return userSubscription.simulacrosUsados < 20;
+    }
+    
+    return false;
+  };
+
+  const handleIniciarSimulacro = (simulacro: any) => {
+    const canAccess = canAccessSimulacro(simulacro);
+    
+    if (!canAccess) {
+      alert('Has alcanzado el límite mensual de simulacros. Mejora tu plan para acceso ilimitado.');
+      return;
+    }
+    
+    // Si no es muestra y tiene plan gratuito, confirmar uso del cupo
+    if (!simulacro.isSample && userSubscription.plan === 'free') {
+      const remaining = userSubscription.simulacrosMaximos - userSubscription.simulacrosUsados;
+      const message = `Vas a usar 1 de tus ${remaining} simulacros restantes este mes. ¿Continuar?`;
+      
+      if (!confirm(message)) {
+        return;
+      }
+    }
+    
+    // Abrir el modal con el simulacro
+    setActiveSimulacro(simulacro);
+    setShowSimulacroViewer(true);
   };
 
   // Detectar tamaño de pantalla
@@ -348,51 +405,73 @@ const StudentDashboard = () => {
     const simulacros = [
       {
         id: 1,
-        nombre: 'Simulacro ICFES - Matemáticas',
-        descripcion: 'Examen completo de matemáticas según el formato ICFES',
-        preguntas: 45,
-        tiempo: '90 min',
-        dificultad: 'Avanzado',
+        nombre: 'Simulacro ICFES - Matemáticas Básico',
+        descripcion: 'Examen de muestra gratuito de matemáticas según el formato ICFES',
+        preguntas: 20,
+        tiempo: '40 min',
+        dificultad: 'Básico',
         ultimoIntento: '85%',
         fecha: '2025-08-25',
         estado: 'completado',
-        color: '#3b82f6',
+        color: '#10b981',
         categoria: 'ICFES',
-        tags: ['Completo', 'Evaluación', 'Preparación']
+        tags: ['🆓 MUESTRA', 'Matemáticas', 'Básico'],
+        isSample: true,
+        requiresSubscription: false
       },
       {
         id: 2,
-        nombre: 'Simulacro ICFES - Física',
-        descripcion: 'Evaluación de conceptos fundamentales de física',
-        preguntas: 30,
-        tiempo: '60 min',
-        dificultad: 'Intermedio',
+        nombre: 'Simulacro ICFES - Física Completo',
+        descripcion: 'Evaluación completa de conceptos fundamentales de física',
+        preguntas: 45,
+        tiempo: '90 min',
+        dificultad: 'Avanzado',
         ultimoIntento: '92%',
         fecha: '2025-08-20',
         estado: 'completado',
-        color: '#10b981',
+        color: '#3b82f6',
         categoria: 'ICFES',
-        tags: ['Rápido', 'Práctica']
+        tags: ['💎 PREMIUM', 'Física', 'Completo'],
+        isSample: false,
+        requiresSubscription: true
       },
       {
         id: 3,
-        nombre: 'Simulacro ICFES - Química',
-        descripcion: 'Examen de química orgánica e inorgánica',
-        preguntas: 35,
-        tiempo: '70 min',
+        nombre: 'Simulacro ICFES - Química Orgánica',
+        descripcion: 'Examen de química orgánica e inorgánica nivel avanzado',
+        preguntas: 50,
+        tiempo: '100 min',
         dificultad: 'Avanzado',
         ultimoIntento: null,
         fecha: null,
         estado: 'disponible',
         color: '#8b5cf6',
         categoria: 'ICFES',
-        tags: ['Completo', 'Examen']
+        tags: ['💎 PREMIUM', 'Química', 'Avanzado'],
+        isSample: false,
+        requiresSubscription: true
       },
       {
         id: 4,
-        nombre: 'Simulacro Universitario - Cálculo',
-        descripcion: 'Preparación para exámenes de admisión universitaria',
-        preguntas: 50,
+        nombre: 'Simulacro Razonamiento Lógico - Gratis',
+        descripcion: 'Práctica gratuita de razonamiento lógico y matemático',
+        preguntas: 15,
+        tiempo: '30 min',
+        dificultad: 'Intermedio',
+        ultimoIntento: null,
+        fecha: null,
+        estado: 'disponible',
+        color: '#10b981',
+        categoria: 'Competencias',
+        tags: ['🆓 GRATIS', 'Razonamiento', 'Práctica'],
+        isSample: true,
+        requiresSubscription: false
+      },
+      {
+        id: 5,
+        nombre: 'Simulacro Universitario - Cálculo Integral',
+        descripcion: 'Preparación completa para exámenes de admisión universitaria',
+        preguntas: 60,
         tiempo: '120 min',
         dificultad: 'Avanzado',
         ultimoIntento: '78%',
@@ -400,10 +479,12 @@ const StudentDashboard = () => {
         estado: 'completado',
         color: '#ef4444',
         categoria: 'Universitario',
-        tags: ['Completo', 'Preparación']
+        tags: ['💎 PREMIUM', 'Cálculo', 'Universitario'],
+        isSample: false,
+        requiresSubscription: true
       },
       {
-        id: 5,
+        id: 6,
         nombre: 'Simulacro Saber Pro - Razonamiento',
         descripcion: 'Competencias genéricas de razonamiento cuantitativo',
         preguntas: 40,
@@ -414,7 +495,9 @@ const StudentDashboard = () => {
         estado: 'completado',
         color: '#f59e0b',
         categoria: 'Saber Pro',
-        tags: ['Práctica', 'Evaluación']
+        tags: ['💎 PREMIUM', 'Razonamiento', 'Evaluación'],
+        isSample: false,
+        requiresSubscription: true
       }
     ];
 
@@ -500,6 +583,67 @@ const StudentDashboard = () => {
           </div>
         </div>
 
+        {/* Panel de Suscripción */}
+        <div style={{
+          background: 'linear-gradient(135deg, #f59e0b, #ea580c)',
+          borderRadius: '16px',
+          padding: '1.5rem',
+          marginBottom: '2rem',
+          color: 'white',
+          boxShadow: '0 8px 32px rgba(245, 158, 11, 0.3)'
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem', flexWrap: 'wrap' as const, gap: '1rem' }}>
+            <div style={{ flex: 1 }}>
+              <h3 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                Plan {userSubscription.plan.toUpperCase()} 🆓
+              </h3>
+              <p style={{ margin: '0.5rem 0 0 0', fontSize: '0.875rem', opacity: 0.9 }}>
+                {userSubscription.simulacrosUsados} de {userSubscription.simulacrosMaximos} simulacros utilizados este mes
+              </p>
+            </div>
+            <button 
+              onClick={() => alert('Funcionalidad de mejora de plan próximamente')}
+              style={{
+                background: 'white',
+                color: '#f59e0b',
+                border: 'none',
+                borderRadius: '8px',
+                padding: '0.75rem 1.5rem',
+                fontWeight: '600',
+                cursor: 'pointer',
+                fontSize: '0.875rem',
+                transition: 'transform 0.2s ease',
+                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)'
+              }}
+              onMouseOver={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
+              onMouseOut={(e) => e.currentTarget.style.transform = 'scale(1)'}
+            >
+              💎 Mejorar Plan
+            </button>
+          </div>
+          
+          {/* Barra de progreso */}
+          <div style={{
+            background: 'rgba(255, 255, 255, 0.2)',
+            borderRadius: '8px',
+            height: '10px',
+            overflow: 'hidden',
+            marginBottom: '0.75rem'
+          }}>
+            <div style={{
+              background: 'white',
+              height: '100%',
+              width: `${(userSubscription.simulacrosUsados / userSubscription.simulacrosMaximos) * 100}%`,
+              transition: 'width 0.3s ease',
+              borderRadius: '8px'
+            }} />
+          </div>
+          
+          <p style={{ margin: 0, fontSize: '0.75rem', opacity: 0.9 }}>
+            📅 Tu cupo se reinicia el {new Date(userSubscription.renovacionMes).toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })}
+          </p>
+        </div>
+
         {/* Vista de simulacros */}
         <div style={{ 
           display: 'grid', 
@@ -544,15 +688,18 @@ const StudentDashboard = () => {
                       }}>
                         {simulacro.nombre}
                       </h3>
-                      <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.75rem' }}>
+                      <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.75rem', flexWrap: 'wrap' as const }}>
                         {simulacro.tags.map(tag => (
                           <span key={tag} style={{
                             padding: '0.25rem 0.5rem',
                             fontSize: '0.75rem',
-                            background: `${simulacro.color}20`,
-                            color: simulacro.color,
+                            background: tag.includes('🆓') || tag.includes('MUESTRA') || tag.includes('GRATIS') ? '#10b98120' : 
+                                       tag.includes('💎') || tag.includes('PREMIUM') ? '#f59e0b20' : `${simulacro.color}20`,
+                            color: tag.includes('🆓') || tag.includes('MUESTRA') || tag.includes('GRATIS') ? '#10b981' : 
+                                  tag.includes('💎') || tag.includes('PREMIUM') ? '#f59e0b' : simulacro.color,
                             borderRadius: '12px',
-                            fontWeight: '500'
+                            fontWeight: '600',
+                            border: tag.includes('💎') || tag.includes('PREMIUM') ? '1px solid #f59e0b' : 'none'
                           }}>
                             {tag}
                           </span>
@@ -609,22 +756,50 @@ const StudentDashboard = () => {
                     )}
                   </div>
                   
-                  <button style={{
-                    width: '100%',
-                    background: `linear-gradient(135deg, ${simulacro.color}, ${simulacro.color}dd)`,
-                    border: 'none',
-                    borderRadius: '8px',
-                    padding: '0.75rem',
-                    color: 'white',
-                    fontWeight: '600',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '0.5rem'
-                  }}>
-                    <Play size={16} />
-                    {simulacro.estado === 'completado' ? 'Repetir' : 'Iniciar'} Simulacro
+                  {/* Mensaje de bloqueo si no tiene acceso */}
+                  {!canAccessSimulacro(simulacro) && (
+                    <div style={{
+                      background: '#ef444420',
+                      border: '1px solid #ef4444',
+                      borderRadius: '8px',
+                      padding: '0.75rem',
+                      marginBottom: '1rem',
+                      fontSize: '0.875rem',
+                      color: '#ef4444',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.5rem'
+                    }}>
+                      🔒 <span>Has alcanzado el límite mensual. Mejora tu plan para acceso ilimitado.</span>
+                    </div>
+                  )}
+                  
+                  <button 
+                    onClick={() => handleIniciarSimulacro(simulacro)}
+                    disabled={!canAccessSimulacro(simulacro)}
+                    style={{
+                      width: '100%',
+                      background: canAccessSimulacro(simulacro) 
+                        ? `linear-gradient(135deg, ${simulacro.color}, ${simulacro.color}dd)` 
+                        : '#9ca3af',
+                      border: 'none',
+                      borderRadius: '8px',
+                      padding: '0.75rem',
+                      color: 'white',
+                      fontWeight: '600',
+                      cursor: canAccessSimulacro(simulacro) ? 'pointer' : 'not-allowed',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '0.5rem',
+                      opacity: canAccessSimulacro(simulacro) ? 1 : 0.6,
+                      transition: 'all 0.3s ease'
+                    }}
+                  >
+                    {canAccessSimulacro(simulacro) ? <Play size={16} /> : <>🔒</>}
+                    {canAccessSimulacro(simulacro) 
+                      ? (simulacro.estado === 'completado' ? 'Repetir' : 'Iniciar') + ' Simulacro'
+                      : 'Bloqueado'}
                   </button>
                 </>
               ) : (
@@ -687,21 +862,31 @@ const StudentDashboard = () => {
                     )}
                   </div>
                   
-                  <button style={{
-                    background: `linear-gradient(135deg, ${simulacro.color}, ${simulacro.color}dd)`,
-                    border: 'none',
-                    borderRadius: '8px',
-                    padding: '0.75rem 1.5rem',
-                    color: 'white',
-                    fontWeight: '600',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.5rem',
-                    whiteSpace: 'nowrap' as const
-                  }}>
-                    <Play size={16} />
-                    {simulacro.estado === 'completado' ? 'Repetir' : 'Iniciar'}
+                  <button 
+                    onClick={() => handleIniciarSimulacro(simulacro)}
+                    disabled={!canAccessSimulacro(simulacro)}
+                    style={{
+                      background: canAccessSimulacro(simulacro) 
+                        ? `linear-gradient(135deg, ${simulacro.color}, ${simulacro.color}dd)` 
+                        : '#9ca3af',
+                      border: 'none',
+                      borderRadius: '8px',
+                      padding: '0.75rem 1.5rem',
+                      color: 'white',
+                      fontWeight: '600',
+                      cursor: canAccessSimulacro(simulacro) ? 'pointer' : 'not-allowed',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.5rem',
+                      whiteSpace: 'nowrap' as const,
+                      opacity: canAccessSimulacro(simulacro) ? 1 : 0.6,
+                      transition: 'all 0.3s ease'
+                    }}
+                  >
+                    {canAccessSimulacro(simulacro) ? <Play size={16} /> : <>🔒</>}
+                    {canAccessSimulacro(simulacro) 
+                      ? (simulacro.estado === 'completado' ? 'Repetir' : 'Iniciar')
+                      : 'Bloqueado'}
                   </button>
                 </>
               )}
@@ -717,6 +902,59 @@ const StudentDashboard = () => {
           }}>
             <Trophy size={48} style={{ marginBottom: '1rem' }} />
             <p>No se encontraron simulacros que coincidan con los filtros seleccionados.</p>
+          </div>
+        )}
+
+        {/* Modal SimulacroViewer */}
+        {showSimulacroViewer && activeSimulacro && (
+          <div style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0, 0, 0, 0.95)',
+            zIndex: 9999,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: isMobile ? '0' : '2rem'
+          }}>
+            <div style={{
+              width: '100%',
+              height: '100%',
+              maxWidth: isMobile ? '100%' : '1400px',
+              background: isDarkMode ? '#1a1a1a' : '#ffffff',
+              borderRadius: isMobile ? '0' : '16px',
+              overflow: 'hidden',
+              boxShadow: '0 20px 60px rgba(0, 0, 0, 0.5)'
+            }}>
+              <SimulacroViewer
+                simulacroId={activeSimulacro.id}
+                onComplete={(results: any) => {
+                  console.log('Simulacro completado:', results);
+                  
+                  // Actualizar cupo si no es muestra y tiene plan gratuito
+                  if (!activeSimulacro.isSample && userSubscription.plan === 'free') {
+                    setUserSubscription(prev => ({
+                      ...prev,
+                      simulacrosUsados: Math.min(prev.simulacrosUsados + 1, prev.simulacrosMaximos)
+                    }));
+                  }
+                  
+                  // Cerrar modal
+                  setShowSimulacroViewer(false);
+                  setActiveSimulacro(null);
+                  
+                  // Mostrar resultados
+                  alert(`¡Simulacro completado!\n\nPuntaje: ${results.score || 'N/A'}\nRespuestas correctas: ${results.correct || 0}/${results.total || 0}`);
+                }}
+                onExit={() => {
+                  const confirmExit = confirm('¿Seguro que quieres salir? Se perderá tu progreso actual.');
+                  if (confirmExit) {
+                    setShowSimulacroViewer(false);
+                    setActiveSimulacro(null);
+                  }
+                }}
+              />
+            </div>
           </div>
         )}
       </div>

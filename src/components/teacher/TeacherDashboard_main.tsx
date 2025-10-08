@@ -37,6 +37,7 @@ import CourseManager from './CourseManager';
 import CourseEditor from './CourseEditor';
 import EvaluationsManager from './EvaluationsManager';
 import QuizBuilder from './QuizBuilder';
+import SimulacroBuilder from './SimulacroBuilder';
 import LiveClassesManager from './LiveClassesManager';
 import StudentsManager from './StudentsManager';
 import GroupManager from './GroupManager';
@@ -55,9 +56,12 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ user: currentUser }
   const [showCourseEditor, setShowCourseEditor] = useState(false);
   const [editingCourse, setEditingCourse] = useState<any | null>(null);
   const [showQuizBuilder, setShowQuizBuilder] = useState(false);
+  const [showSimulacroBuilder, setShowSimulacroBuilder] = useState(false);
   const [editingEvaluation, setEditingEvaluation] = useState<any | null>(null);
+  const [editingSimulacro, setEditingSimulacro] = useState<any | null>(null);
   const [coursesViewMode, setCoursesViewMode] = useState<'cards' | 'list'>('cards');
   const [evaluationsViewMode, setEvaluationsViewMode] = useState<'cards' | 'list'>('cards');
+  const [simulacrosViewMode, setSimulacrosViewMode] = useState<'cards' | 'list'>('cards');
   const [courseFilters, setCourseFilters] = useState({ search: '', category: 'all', status: 'all', sortBy: 'date' });
   const [evaluationFilters, setEvaluationFilters] = useState({ search: '', type: 'all', status: 'all', course: 'all', sortBy: 'date' });
 
@@ -74,7 +78,8 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ user: currentUser }
     { id: 'overview', label: 'Resumen', icon: BarChart3 },
     { id: 'courses', label: 'Cursos', icon: BookOpen },
     { id: 'live-classes', label: 'Clases en Vivo', icon: Video },
-    { id: 'evaluations', label: 'Evaluaciones', icon: FileText },
+    { id: 'evaluations', label: 'Quizzes (Cursos)', icon: FileText },
+    { id: 'simulacros', label: 'Simulacros (Práctica)', icon: Award },
     { id: 'students', label: 'Estudiantes', icon: Users },
     { id: 'groups', label: 'Grupos', icon: Shield },
     { id: 'messages', label: 'Mensajes', icon: MessageSquare },
@@ -712,41 +717,38 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ user: currentUser }
   const renderEvaluations = () => (
     <div style={{ display:'flex', flexDirection:'column', gap:'1.5rem' }}>
       <div style={{ display:'flex', flexWrap:'wrap', gap:'1rem', alignItems:'center' }}>
-        <h2 style={{ margin:0, color: theme.colors.current.text.primary }}>Evaluaciones & Simulacros</h2>
+        <div>
+          <h2 style={{ margin:0, color: theme.colors.current.text.primary }}>📝 Quizzes de Cursos</h2>
+          <p style={{ margin:'0.5rem 0 0', color: theme.colors.current.text.secondary, fontSize:'0.875rem' }}>
+            Evaluaciones vinculadas a cursos específicos
+          </p>
+        </div>
         <div style={{ marginLeft:'auto', display:'flex', gap:'0.5rem' }}>
           <button onClick={()=> setEvaluationsViewMode(v=> v==='cards' ? 'list' : 'cards')}
             style={{ padding:'0.5rem 1rem', background: theme.colors.current.background.secondary, border:`1px solid ${theme.colors.current.border}`, borderRadius:8, cursor:'pointer', color: theme.colors.current.text.primary }}>
             {evaluationsViewMode==='cards' ? 'Vista Lista' : 'Vista Tarjetas'}
           </button>
           <button onClick={()=> { setEditingEvaluation(null); setShowQuizBuilder(true); }}
-            style={{ padding:'0.5rem 1rem', background:'#8b5cf6', border:'none', borderRadius:8, cursor:'pointer', color:'white', fontWeight:600 }}>
-            + Nuevo Quiz/Simulacro
+            style={{ padding:'0.5rem 1.5rem', background:'#8b5cf6', border:'none', borderRadius:8, cursor:'pointer', color:'white', fontWeight:600 }}>
+            + Nuevo Quiz
           </button>
         </div>
       </div>
       <div style={{ display:'flex', gap:'1rem', flexWrap:'wrap' }}>
-        <input placeholder="Buscar" value={evaluationFilters.search} onChange={e=>setEvaluationFilters(f=>({...f,search:e.target.value}))}
+        <input placeholder="Buscar quiz..." value={evaluationFilters.search} onChange={e=>setEvaluationFilters(f=>({...f,search:e.target.value}))}
           style={{ padding:'0.5rem 0.75rem', borderRadius:8, border:`1px solid ${theme.colors.current.border}`, background: theme.colors.current.background.secondary, color: theme.colors.current.text.primary }} />
-        <select value={evaluationFilters.type} onChange={e=>setEvaluationFilters(f=>({...f,type:e.target.value}))}
+        <select value={evaluationFilters.course} onChange={e=>setEvaluationFilters(f=>({...f,course:e.target.value}))}
           style={{ padding:'0.5rem', borderRadius:8, border:`1px solid ${theme.colors.current.border}`, background: theme.colors.current.background.secondary, color: theme.colors.current.text.primary }}>
-          <option value="all">Todos Tipos</option>
-          <option value="quiz">Quiz</option>
-          <option value="exam">Examen</option>
-          <option value="simulacro">Simulacro</option>
+          <option value="all">Todos los Cursos</option>
+          <option value="Cálculo Diferencial">Cálculo Diferencial</option>
+          <option value="Programación Python">Programación Python</option>
         </select>
         <select value={evaluationFilters.status} onChange={e=>setEvaluationFilters(f=>({...f,status:e.target.value}))}
           style={{ padding:'0.5rem', borderRadius:8, border:`1px solid ${theme.colors.current.border}`, background: theme.colors.current.background.secondary, color: theme.colors.current.text.primary }}>
           <option value="all">Todos Estados</option>
           <option value="draft">Borrador</option>
-            <option value="active">Activo</option>
-            <option value="finished">Finalizado</option>
-            <option value="archived">Archivado</option>
-        </select>
-        <select value={evaluationFilters.course} onChange={e=>setEvaluationFilters(f=>({...f,course:e.target.value}))}
-          style={{ padding:'0.5rem', borderRadius:8, border:`1px solid ${theme.colors.current.border}`, background: theme.colors.current.background.secondary, color: theme.colors.current.text.primary }}>
-          <option value="all">Todos Cursos</option>
-          <option value="Cálculo Diferencial">Cálculo Diferencial</option>
-          <option value="Programación Python">Programación Python</option>
+          <option value="active">Activo</option>
+          <option value="finished">Finalizado</option>
         </select>
         <select value={evaluationFilters.sortBy} onChange={e=>setEvaluationFilters(f=>({...f,sortBy:e.target.value}))}
           style={{ padding:'0.5rem', borderRadius:8, border:`1px solid ${theme.colors.current.border}`, background: theme.colors.current.background.secondary, color: theme.colors.current.text.primary }}>
@@ -775,6 +777,127 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ user: currentUser }
     </div>
   );
 
+  const renderSimulacros = () => (
+    <div style={{ display:'flex', flexDirection:'column', gap:'1.5rem' }}>
+      <div style={{ display:'flex', flexWrap:'wrap', gap:'1rem', alignItems:'center' }}>
+        <div>
+          <h2 style={{ margin:0, color: theme.colors.current.text.primary }}>🏆 Simulacros de Práctica</h2>
+          <p style={{ margin:'0.5rem 0 0', color: theme.colors.current.text.secondary, fontSize:'0.875rem' }}>
+            Exámenes independientes con sistema de suscripciones
+          </p>
+        </div>
+        <div style={{ marginLeft:'auto', display:'flex', gap:'0.5rem' }}>
+          <button onClick={()=> setSimulacrosViewMode(v=> v==='cards' ? 'list' : 'cards')}
+            style={{ padding:'0.5rem 1rem', background: theme.colors.current.background.secondary, border:`1px solid ${theme.colors.current.border}`, borderRadius:8, cursor:'pointer', color: theme.colors.current.text.primary }}>
+            {simulacrosViewMode==='cards' ? 'Vista Lista' : 'Vista Tarjetas'}
+          </button>
+          <button onClick={()=> { setEditingSimulacro(null); setShowSimulacroBuilder(true); }}
+            style={{ padding:'0.5rem 1.5rem', background:'#f59e0b', border:'none', borderRadius:8, cursor:'pointer', color:'white', fontWeight:600 }}>
+            + Nuevo Simulacro
+          </button>
+        </div>
+      </div>
+      <div style={{ 
+        padding:'1rem', 
+        background: theme.colors.current.background.secondary, 
+        borderRadius:8, 
+        border:`1px solid ${theme.colors.current.border}`,
+        display:'flex',
+        gap:'2rem',
+        flexWrap:'wrap'
+      }}>
+        <div>
+          <div style={{ fontSize:'2rem', fontWeight:'bold', color:'#10b981' }}>45</div>
+          <div style={{ fontSize:'0.875rem', color: theme.colors.current.text.secondary }}>Total Simulacros</div>
+        </div>
+        <div>
+          <div style={{ fontSize:'2rem', fontWeight:'bold', color:'#3b82f6' }}>12</div>
+          <div style={{ fontSize:'0.875rem', color: theme.colors.current.text.secondary }}>De Muestra (Free)</div>
+        </div>
+        <div>
+          <div style={{ fontSize:'2rem', fontWeight:'bold', color:'#f59e0b' }}>1,234</div>
+          <div style={{ fontSize:'0.875rem', color: theme.colors.current.text.secondary }}>Intentos este mes</div>
+        </div>
+        <div>
+          <div style={{ fontSize:'2rem', fontWeight:'bold', color:'#8b5cf6' }}>72%</div>
+          <div style={{ fontSize:'0.875rem', color: theme.colors.current.text.secondary }}>Tasa aprobación</div>
+        </div>
+      </div>
+      <div style={{ display:'flex', gap:'1rem', flexWrap:'wrap' }}>
+        <input placeholder="Buscar simulacro..." 
+          style={{ flex:1, minWidth:'200px', padding:'0.5rem 0.75rem', borderRadius:8, border:`1px solid ${theme.colors.current.border}`, background: theme.colors.current.background.secondary, color: theme.colors.current.text.primary }} />
+        <select style={{ padding:'0.5rem', borderRadius:8, border:`1px solid ${theme.colors.current.border}`, background: theme.colors.current.background.secondary, color: theme.colors.current.text.primary }}>
+          <option value="all">Todas las Categorías</option>
+          <option value="admision">Admisión Universitaria</option>
+          <option value="certificacion">Certificaciones</option>
+          <option value="competencias">Competencias</option>
+        </select>
+        <select style={{ padding:'0.5rem', borderRadius:8, border:`1px solid ${theme.colors.current.border}`, background: theme.colors.current.background.secondary, color: theme.colors.current.text.primary }}>
+          <option value="all">Todos los Niveles</option>
+          <option value="free">Muestra (Free)</option>
+          <option value="basic">Basic</option>
+          <option value="premium">Premium</option>
+        </select>
+        <select style={{ padding:'0.5rem', borderRadius:8, border:`1px solid ${theme.colors.current.border}`, background: theme.colors.current.background.secondary, color: theme.colors.current.text.primary }}>
+          <option value="all">Todos Estados</option>
+          <option value="published">Publicado</option>
+          <option value="draft">Borrador</option>
+        </select>
+      </div>
+      
+      {/* Lista de simulacros - placeholder */}
+      <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(300px, 1fr))', gap:'1.5rem' }}>
+        {[1, 2, 3, 4].map(i => (
+          <div key={i} style={{
+            background: theme.colors.current.background.secondary,
+            border:`1px solid ${theme.colors.current.border}`,
+            borderRadius:12,
+            padding:'1.5rem',
+            cursor:'pointer',
+            transition:'all 0.2s'
+          }}>
+            <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:'1rem' }}>
+              <h3 style={{ margin:0, color: theme.colors.current.text.primary }}>Simulacro UNAM {i}</h3>
+              <span style={{ padding:'0.25rem 0.75rem', background:'#10b981', color:'white', borderRadius:6, fontSize:'0.75rem' }}>
+                {i === 1 ? 'MUESTRA' : 'PREMIUM'}
+              </span>
+            </div>
+            <p style={{ margin:'0 0 1rem', fontSize:'0.875rem', color: theme.colors.current.text.secondary }}>
+              Preparación para examen de admisión
+            </p>
+            <div style={{ display:'flex', gap:'1rem', fontSize:'0.875rem', color: theme.colors.current.text.secondary }}>
+              <span>⏱️ 120 min</span>
+              <span>📝 120 preguntas</span>
+              <span>👥 234 intentos</span>
+            </div>
+            <div style={{ marginTop:'1rem', display:'flex', gap:'0.5rem' }}>
+              <button 
+                onClick={() => { setEditingSimulacro({ id: i }); setShowSimulacroBuilder(true); }}
+                style={{ flex:1, padding:'0.5rem', background:'#3b82f6', color:'white', border:'none', borderRadius:6, cursor:'pointer' }}>
+                Editar
+              </button>
+              <button style={{ padding:'0.5rem 0.75rem', background: theme.colors.current.background.tertiary, border:`1px solid ${theme.colors.current.border}`, borderRadius:6, cursor:'pointer' }}>
+                📊
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {showSimulacroBuilder && (
+        <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.6)', zIndex:1000, display:'flex', alignItems:'center', justifyContent:'center', padding:'2rem' }}>
+          <div style={{ background: theme.colors.current.background.primary, width:'100%', maxWidth: '1400px', maxHeight:'100%', overflow:'auto', borderRadius: 16 }}>
+            <SimulacroBuilder 
+              simulacroId={editingSimulacro?.id}
+              onSave={(simulacro)=>{ console.log('save simulacro', simulacro); setShowSimulacroBuilder(false); }}
+              onCancel={()=> setShowSimulacroBuilder(false)}
+            />
+          </div>
+        </div>
+      )}
+    </div>
+  );
+
   const renderContent = () => {
     switch (activeSection) {
       case 'overview':
@@ -785,6 +908,8 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ user: currentUser }
         return <LiveClassesManager />;
       case 'evaluations':
         return renderEvaluations();
+      case 'simulacros':
+        return renderSimulacros();
       case 'students':
         return <StudentsManager onNavigateToGroups={() => setActiveSection('groups')} />;
       case 'groups':

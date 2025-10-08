@@ -1,0 +1,189 @@
+
+# SISTEMA DE EVALUACIONES SEPARADAS
+
+┌─────────────────────────────────────────────────────────────────┐
+│                     EPSILON ACADEMY                              │
+│                   Sistema de Evaluaciones                        │
+└─────────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────┐          ┌──────────────────────────┐
+│       QUIZZES            │          │      SIMULACROS          │
+│  (Evaluaciones Curso)    │          │  (Exámenes Práctica)     │
+└──────────────────────────┘          └──────────────────────────┘
+           │                                      │
+           │                                      │
+    ┌──────▼───────┐                      ┌──────▼───────┐
+    │ VINCULADO A  │                      │ INDEPENDIENTE│
+    │    CURSO     │                      │  DE CURSOS   │
+    └──────────────┘                      └──────────────┘
+           │                                      │
+    ┌──────▼───────────────────┐         ┌──────▼─────────────────┐
+    │ • Parte del curso        │         │ • Categorías libres    │
+    │ • Solo inscritos         │         │ • Todos los usuarios   │
+    │ • Calificación curso     │         │ • Sistema suscripción  │
+    │ • Fechas específicas     │         │ • Siempre disponible   │
+    │ • Sin costo extra        │         │ • Monetización         │
+    └──────────────────────────┘         └────────────────────────┘
+
+
+═══════════════════════════════════════════════════════════════════
+                    TABLAS DE BASE DE DATOS
+═══════════════════════════════════════════════════════════════════
+
+┌─────────────────────┐              ┌─────────────────────┐
+│      QUIZZES        │              │    SIMULACROS       │
+│  (curso evaluación) │              │  (examen práctica)  │
+└──────────┬──────────┘              └──────────┬──────────┘
+           │                                    │
+    ┌──────▼────────────┐              ┌───────▼──────────┐
+    │ quiz_questions    │              │simulacro_questions│
+    └──────┬────────────┘              └───────┬──────────┘
+           │                                    │
+    ┌──────▼──────────────┐           ┌────────▼───────────┐
+    │quiz_question_options│           │ question_options   │
+    └─────────────────────┘           └────────────────────┘
+           │                                    │
+    ┌──────▼────────────┐              ┌───────▼──────────┐
+    │  quiz_attempts    │              │simulacro_attempts│
+    └──────┬────────────┘              └───────┬──────────┘
+           │                                    │
+    ┌──────▼──────────────┐           ┌────────▼───────────┐
+    │quiz_student_answers │           │ student_answers    │
+    └─────────────────────┘           └────────────────────┘
+                                               │
+                                      ┌────────▼──────────┐
+                                      │  subscriptions    │
+                                      │ (free/premium)    │
+                                      └───────────────────┘
+
+
+═══════════════════════════════════════════════════════════════════
+                       FLUJO DE USUARIO
+═══════════════════════════════════════════════════════════════════
+
+ESTUDIANTE
+    │
+    ├─► [Inscrito en Curso]
+    │        │
+    │        ├─► Ve QUIZZES del curso
+    │        │       │
+    │        │       ├─► Toma Quiz 1
+    │        │       ├─► Toma Quiz 2
+    │        │       └─► Calificación → Curso
+    │        │
+    │        └─► Progreso en curso
+    │
+    └─► [Suscripción Premium]
+             │
+             └─► Ve SIMULACROS disponibles
+                     │
+                     ├─► Categoría: Admisión
+                     │       ├─► Simulacro Matemáticas
+                     │       └─► Simulacro Verbal
+                     │
+                     ├─► Categoría: Certificación
+                     │       └─► Simulacro AWS
+                     │
+                     └─► Práctica independiente
+
+
+═══════════════════════════════════════════════════════════════════
+                    PLANES DE SUSCRIPCIÓN
+═══════════════════════════════════════════════════════════════════
+
+┌──────────────────────────────────────────────────────────────┐
+│  FREE           │  5 simulacros/mes  │  Gratis             │
+├─────────────────┼────────────────────┼─────────────────────┤
+│  BASIC          │  20 simulacros/mes │  $X/mes             │
+├─────────────────┼────────────────────┼─────────────────────┤
+│  PREMIUM        │  Ilimitado         │  $XX/mes            │
+├─────────────────┼────────────────────┼─────────────────────┤
+│  ENTERPRISE     │  Ilimitado + Custom│  $XXX/mes           │
+└──────────────────────────────────────────────────────────────┘
+
+Simulacros de MUESTRA (is_sample = true):
+  → Disponibles para TODOS (incluso free)
+  → No cuentan para límite mensual
+  → Sirven como DEMO del sistema
+
+
+═══════════════════════════════════════════════════════════════════
+                  COMPONENTES FRONTEND
+═══════════════════════════════════════════════════════════════════
+
+PROFESOR
+  │
+  ├─► QuizBuilder.tsx
+  │     └─► Crear quizzes vinculados a CURSOS
+  │
+  └─► SimulacroBuilder.tsx
+        └─► Crear simulacros INDEPENDIENTES
+
+
+ESTUDIANTE
+  │
+  ├─► QuizViewer.tsx
+  │     └─► Tomar quizzes del curso
+  │
+  └─► SimulacroViewer.tsx
+        └─► Tomar simulacros de práctica
+
+
+═══════════════════════════════════════════════════════════════════
+                  MIGRACIONES REQUERIDAS
+═══════════════════════════════════════════════════════════════════
+
+1. supabase/migrations/20250107_quizzes_system.sql
+   └─► Crea: quizzes, quiz_questions, quiz_question_options,
+             quiz_attempts, quiz_student_answers
+
+2. supabase/migrations/20250107_simulacros_system.sql
+   └─► Crea: subscriptions, simulacros, simulacro_questions,
+             question_options, simulacro_attempts, student_answers
+
+
+═══════════════════════════════════════════════════════════════════
+                    SOPORTE DE IMÁGENES
+═══════════════════════════════════════════════════════════════════
+
+AMBOS SISTEMAS soportan imágenes en:
+  ✓ Pregunta (question_image_url)
+  ✓ Cada opción (option_image_url)
+  ✓ Explicación (explanation_image_url)
+  ✓ Portada (thumbnail_url) [solo simulacros]
+
+
+═══════════════════════════════════════════════════════════════════
+                      EJEMPLO PRÁCTICO
+═══════════════════════════════════════════════════════════════════
+
+Estudiante: Juan Pérez
+  │
+  ├─► Curso: Matemáticas 101
+  │     ├─► Quiz 1: Álgebra Básica (70/100) ✓
+  │     ├─► Quiz 2: Ecuaciones (85/100) ✓
+  │     └─► Quiz Final: Pendiente
+  │
+  └─► Suscripción: Premium
+        ├─► Simulacro: Admisión UNAM (75/100) ✓
+        ├─► Simulacro: Admisión IPN (82/100) ✓
+        └─► Simulacro: SAT Math (Disponible)
+
+Los quizzes afectan su CALIFICACIÓN del curso
+Los simulacros son para PRÁCTICA personal
+
+
+═══════════════════════════════════════════════════════════════════
+                    RESUMEN EJECUTIVO
+═══════════════════════════════════════════════════════════════════
+
+QUIZZES                         SIMULACROS
+───────                         ──────────
+✓ Curso específico              ✓ Independiente
+✓ Estudiantes inscritos         ✓ Cualquier usuario
+✓ Calificación del curso        ✓ Solo práctica
+✓ Incluido en curso             ✓ Requiere suscripción
+✓ Fechas límite                 ✓ Siempre disponible
+✓ Profesor del curso            ✓ Cualquier profesor
+
+═══════════════════════════════════════════════════════════════════
