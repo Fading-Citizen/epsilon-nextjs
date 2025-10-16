@@ -61,10 +61,18 @@ export interface SimulacroSettings {
   isSample: boolean; // Disponible para usuarios free
   requiresSubscription: 'free' | 'basic' | 'premium' | 'enterprise';
   
+  // Prerequisitos (dependencias)
+  prerequisiteSimulacroId?: string; // ID del simulacro que debe completarse primero
+  minimumScoreRequired?: number; // Puntaje mínimo requerido en el prerequisito (0-100)
+  
   // Configuración del examen
   timeLimitMinutes: number;
   maxAttempts: number;
   passingScore: number;
+  
+  // Selección aleatoria de preguntas
+  useRandomQuestions: boolean; // Si es true, selecciona al azar del banco
+  randomQuestionCount?: number; // Cantidad de preguntas a seleccionar aleatoriamente
   
   // Opciones de comportamiento
   shuffleQuestions: boolean;
@@ -132,6 +140,8 @@ const SimulacroBuilder: React.FC<SimulacroBuilderProps> = ({
     timeLimitMinutes: 60,
     maxAttempts: 3,
     passingScore: 70,
+    useRandomQuestions: false,
+    randomQuestionCount: undefined,
     shuffleQuestions: false,
     shuffleOptions: true,
     showCorrectAnswers: true,
@@ -177,6 +187,7 @@ const SimulacroBuilder: React.FC<SimulacroBuilderProps> = ({
     showResultsImmediately: true
   });
 
+  // Estado de preguntas del banco
   const [questions, setQuestions] = useState<SimulacroQuestion[]>([]);
   const [uploadingImage, setUploadingImage] = useState(false);
 
@@ -841,6 +852,49 @@ const SettingsTab: React.FC<{
       </div>
 
       <div className={styles.settingsSection}>
+        <h3>Prerequisitos y Dependencias</h3>
+        
+        <div className={styles.formGroup}>
+          <label>Simulacro Prerequisito</label>
+          <select
+            value={settings.prerequisiteSimulacroId || ''}
+            onChange={(e) => setSettings({ 
+              ...settings, 
+              prerequisiteSimulacroId: e.target.value || undefined,
+              minimumScoreRequired: e.target.value ? (settings.minimumScoreRequired || 70) : undefined
+            })}
+            className={styles.select}
+          >
+            <option value="">Ninguno (sin prerequisitos)</option>
+            <option value="sim-1">Simulacro ICFES - Matemáticas Básico</option>
+            <option value="sim-2">Simulacro ICFES - Lectura Crítica</option>
+            <option value="sim-3">Simulacro Saber Pro - Razonamiento Cuantitativo</option>
+            {/* En producción, esto se llenará con simulacros reales de la BD */}
+          </select>
+          <p className={styles.helpText}>
+            El estudiante debe completar este simulacro primero antes de acceder al actual
+          </p>
+        </div>
+
+        {settings.prerequisiteSimulacroId && (
+          <div className={styles.formGroup}>
+            <label>Puntaje Mínimo Requerido (%)</label>
+            <input
+              type="number"
+              value={settings.minimumScoreRequired || 70}
+              onChange={(e) => setSettings({ ...settings, minimumScoreRequired: parseInt(e.target.value) || 70 })}
+              min="0"
+              max="100"
+              className={styles.input}
+            />
+            <p className={styles.helpText}>
+              El estudiante debe obtener al menos este puntaje en el simulacro prerequisito
+            </p>
+          </div>
+        )}
+      </div>
+
+      <div className={styles.settingsSection}>
         <h3>Configuración del Examen</h3>
         
         <div className={styles.formRow}>
@@ -879,6 +933,61 @@ const SettingsTab: React.FC<{
             />
           </div>
         </div>
+
+        {/* Selección aleatoria de preguntas */}
+        <div className={styles.formGroup} style={{ marginTop: '1.5rem' }}>
+          <label className={styles.checkboxLabel}>
+            <input
+              type="checkbox"
+              checked={settings.useRandomQuestions}
+              onChange={(e) => setSettings({ 
+                ...settings, 
+                useRandomQuestions: e.target.checked,
+                randomQuestionCount: e.target.checked ? (settings.randomQuestionCount || Math.min(30, questions.length)) : undefined
+              })}
+            />
+            <span>Seleccionar preguntas al azar del banco total</span>
+          </label>
+          <p className={styles.helpText}>
+            Al activar esta opción, cada vez que un estudiante inicie el simulacro se seleccionarán preguntas aleatorias del banco total
+          </p>
+        </div>
+
+        {settings.useRandomQuestions && (
+          <div className={styles.formGroup}>
+            <label>
+              Cantidad de preguntas a seleccionar
+              <span style={{ 
+                marginLeft: '0.5rem', 
+                fontSize: '0.875rem', 
+                color: '#6b7280',
+                fontWeight: 'normal'
+              }}>
+                (Banco total: {questions.length} preguntas)
+              </span>
+            </label>
+            <input
+              type="number"
+              value={settings.randomQuestionCount || ''}
+              onChange={(e) => {
+                const value = parseInt(e.target.value) || 0;
+                setSettings({ 
+                  ...settings, 
+                  randomQuestionCount: Math.min(value, questions.length)
+                });
+              }}
+              min="1"
+              max={questions.length}
+              className={styles.input}
+              placeholder={`Máximo: ${questions.length}`}
+            />
+            <p className={styles.helpText}>
+              {settings.randomQuestionCount 
+                ? `Se seleccionarán ${settings.randomQuestionCount} preguntas aleatorias de las ${questions.length} disponibles en el banco`
+                : 'Especifica cuántas preguntas se deben seleccionar aleatoriamente'}
+            </p>
+          </div>
+        )}
       </div>
 
       <div className={styles.settingsSection}>

@@ -6,8 +6,9 @@ import {
   Clock, ChevronLeft, ChevronRight, Flag, Send, AlertCircle,
   CheckCircle, XCircle, Eye, EyeOff, Award, Target, TrendingUp
 } from 'lucide-react';
-import { QuestionOption, ResultsView } from './SimulacroViewerComponents';
+import { QuestionOption } from './SimulacroViewerComponents';
 import { PerformanceThreshold } from '../admin/ThresholdsEditor';
+import SummaryPage from './SummaryPage';
 
 // ============================================================================
 // INTERFACES
@@ -29,6 +30,7 @@ interface SimulacroData {
   performanceThresholds: PerformanceThreshold[];
   shuffleQuestions: boolean;
   shuffleOptions: boolean;
+  maxAttempts?: number; // Intentos máximos permitidos (undefined = ilimitados)
   questions: Question[];
 }
 
@@ -423,14 +425,63 @@ const SimulacroViewer: React.FC<SimulacroViewerProps> = ({
     );
   }
 
-  if (showResults) {
+  if (showResults && results) {
+    // Preparar datos para SummaryPage
+    const incorrectAnswers = results.totalQuestions - results.correctAnswers;
+    const blankAnswers = results.totalQuestions - results.answeredQuestions;
+    
+    const currentAttempt = {
+      score: results.percentage,
+      percentage: results.percentage,
+      timeSpentSeconds: results.timeSpent,
+      correctAnswers: results.correctAnswers,
+      incorrectAnswers,
+      blankAnswers,
+      passed: results.passed,
+      date: new Date()
+    };
+
+    // TODO: Obtener datos reales de la base de datos
+    const platformStats = {
+      totalStudents: 423,
+      totalAttempts: 1547,
+      averageScore: 72.5,
+      averageTime: 85 * 60, // 85 minutos en segundos
+      passRate: 68.5
+    };
+
+    // TODO: Obtener historial real de la base de datos
+    const attemptHistory = [{
+      attemptNumber: 1,
+      date: new Date(),
+      score: results.percentage,
+      timeSpent: results.timeSpent,
+      correctAnswers: results.correctAnswers,
+      incorrectAnswers,
+      blankAnswers
+    }];
+
     return (
-      <ResultsView
-        simulacro={simulacro}
-        answers={answers}
-        results={results}
-        onReview={() => setShowResults(false)}
+      <SummaryPage
+        simulacroTitle={simulacro.title}
+        totalQuestions={simulacro.questions.length}
+        timeLimitMinutes={simulacro.timeLimitMinutes}
+        passingScore={simulacro.passingScore}
+        performanceThreshold={results.performanceThreshold}
+        maxAttempts={simulacro.maxAttempts}
+        currentAttempt={currentAttempt}
+        attemptHistory={attemptHistory}
+        platformStats={platformStats}
+        onRetry={() => {
+          // Reiniciar simulacro
+          setShowResults(false);
+          setIsSubmitted(false);
+          setAnswers({});
+          setCurrentQuestionIndex(0);
+          setTimeRemaining(simulacro.timeLimitMinutes * 60);
+        }}
         onExit={onExit}
+        onReviewAnswers={() => setShowResults(false)}
       />
     );
   }

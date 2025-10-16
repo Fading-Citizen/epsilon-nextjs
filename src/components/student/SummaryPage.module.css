@@ -569,10 +569,62 @@
 ============================================================================ */
 
 .actions {
+  margin-top: 3rem;
+  padding-top: 2rem;
+  border-top: 2px solid #e2e8f0;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.attemptsInfo {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  background: linear-gradient(135deg, #f0f9ff 0%, #f8fafc 100%);
+  border: 2px solid #bfdbfe;
+  border-radius: 12px;
+  padding: 1rem 1.5rem;
+}
+
+.attemptsInfoIcon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.1);
+}
+
+.attemptsInfoText {
+  flex: 1;
+}
+
+.attemptsInfoLabel {
+  font-size: 0.875rem;
+  color: #64748b;
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}
+
+.attemptsInfoValue {
+  font-size: 1.125rem;
+  color: #1e293b;
+  font-weight: 700;
+}
+
+.attemptsRemaining {
+  font-size: 0.875rem;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.actionButtons {
   display: flex;
   gap: 1rem;
   justify-content: center;
-  margin-top: 2rem;
   flex-wrap: wrap;
 }
 
@@ -596,9 +648,15 @@
   color: white;
 }
 
-.actionButtonPrimary:hover {
+.actionButtonPrimary:hover:not(:disabled) {
   transform: translateY(-2px);
   box-shadow: 0 8px 20px rgba(105, 105, 188, 0.3);
+}
+
+.actionButtonPrimary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: #cbd5e1;
 }
 
 .actionButtonSecondary {
@@ -667,10 +725,225 @@
     flex-direction: column;
   }
 
+  .actionButtons {
+    flex-direction: column;
+  }
+
   .actionButtonPrimary,
   .actionButtonSecondary,
   .actionButtonOutline {
     width: 100%;
     justify-content: center;
   }
+
+  .leaderboardHeader {
+    padding: 0.75rem 1rem;
+    font-size: 0.75rem;
+  }
+
+  .leaderboardHeaderCell:nth-child(4),
+  .leaderboardHeaderCell:nth-child(5) {
+    display: none;
+  }
+
+  .leaderboardRow {
+    padding: 0.875rem 1rem;
+  }
+
+  .leaderboardCell:nth-child(4),
+  .leaderboardCell:nth-child(5) {
+    display: none;
+  }
+
+  .positionBadge {
+    width: 32px;
+    height: 32px;
+  }
+
+  .positionMedal {
+    font-size: 1.5rem;
+  }
+
+  .userName {
+    font-size: 0.875rem;
+  }
+
+  .scorePercentage {
+    font-size: 0.9rem;
+  }
+
+  .userPositionNotice {
+    font-size: 0.85rem;
+    padding: 0.875rem 1rem;
+  }
 }
+
+/* ============================================================================
+   LEADERBOARD / TABLA DE CLASIFICACIÓN
+   ============================================================================ */
+
+.leaderboardSection {
+  background: white;
+  border-radius: 16px;
+  padding: 2rem;
+  margin-top: 2rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.userPositionBadge {
+  display: inline-block;
+  margin-left: 1rem;
+  padding: 0.375rem 0.875rem;
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  color: white;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+}
+
+.leaderboardContainer {
+  margin-top: 1.5rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.leaderboardHeader {
+  display: flex;
+  background: linear-gradient(135deg, #f3f4f6, #e5e7eb);
+  padding: 1rem 1.5rem;
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: #374151;
+  border-bottom: 2px solid #d1d5db;
+}
+
+.leaderboardHeaderCell {
+  text-align: left;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+}
+
+.leaderboardBody {
+  max-height: 600px;
+  overflow-y: auto;
+}
+
+.leaderboardRow {
+  display: flex;
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid #f3f4f6;
+  transition: all 0.2s ease;
+  align-items: center;
+}
+
+.leaderboardRow:hover {
+  background: #f9fafb;
+}
+
+.leaderboardRow:last-child {
+  border-bottom: none;
+}
+
+.leaderboardRowHighlight {
+  background: linear-gradient(90deg, rgba(59, 130, 246, 0.08), rgba(59, 130, 246, 0.02));
+  border-left: 4px solid #3b82f6;
+  padding-left: calc(1.5rem - 4px);
+}
+
+.leaderboardRowHighlight:hover {
+  background: linear-gradient(90deg, rgba(59, 130, 246, 0.12), rgba(59, 130, 246, 0.04));
+}
+
+.leaderboardCell {
+  display: flex;
+  align-items: center;
+  font-size: 0.9rem;
+}
+
+.positionBadge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+}
+
+.positionMedal {
+  font-size: 1.75rem;
+  line-height: 1;
+}
+
+.positionNumber {
+  font-weight: 600;
+  color: #6b7280;
+  font-size: 1rem;
+}
+
+.userName {
+  font-weight: 500;
+  color: #1f2937;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.youBadge {
+  display: inline-block;
+  padding: 0.25rem 0.625rem;
+  background: #3b82f6;
+  color: white;
+  border-radius: 12px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+}
+
+.scoreValue {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.scorePercentage {
+  font-weight: 700;
+  color: #10b981;
+  font-size: 1rem;
+}
+
+.scorePoints {
+  font-size: 0.75rem;
+  color: #6b7280;
+}
+
+.timeValue {
+  font-weight: 600;
+  color: #6b7280;
+  font-family: 'Courier New', monospace;
+}
+
+.dateValue {
+  font-size: 0.85rem;
+  color: #9ca3af;
+}
+
+.userPositionNotice {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+  padding: 1rem 1.25rem;
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(99, 102, 241, 0.1));
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  border-radius: 10px;
+  color: #1e40af;
+  font-size: 0.9rem;
+}
+
+.userPositionNotice strong {
+  font-weight: 700;
+  color: #3b82f6;
+}
+

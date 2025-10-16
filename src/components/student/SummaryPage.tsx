@@ -4,7 +4,7 @@ import React from 'react';
 import styles from './SummaryPage.module.css';
 import {
   Clock, CheckCircle, XCircle, Circle, TrendingUp, Users,
-  Award, Target, BarChart3, Activity, Calendar, RefreshCw
+  Award, Target, BarChart3, Activity, Calendar, RefreshCw, Eye
 } from 'lucide-react';
 import { PerformanceThreshold } from '../admin/ThresholdsEditor';
 
@@ -30,6 +30,16 @@ interface PlatformStats {
   passRate: number;
 }
 
+interface LeaderboardEntry {
+  position: number;
+  userName: string;
+  score: number;
+  percentage: number;
+  timeSpent: number;
+  date: Date;
+  isCurrentUser?: boolean;
+}
+
 interface SummaryPageProps {
   // Datos del simulacro
   simulacroTitle: string;
@@ -37,6 +47,7 @@ interface SummaryPageProps {
   timeLimitMinutes: number;
   passingScore: number;
   performanceThreshold?: PerformanceThreshold;
+  maxAttempts?: number; // Intentos máximos permitidos (undefined = ilimitados)
   
   // Resultados del intento actual
   currentAttempt: {
@@ -56,6 +67,10 @@ interface SummaryPageProps {
   // Estadísticas de la plataforma
   platformStats?: PlatformStats;
   
+  // Tabla de clasificación (Top 30)
+  leaderboard?: LeaderboardEntry[];
+  userPosition?: number; // Posición del usuario actual en el ranking
+  
   // Callbacks
   onRetry?: () => void;
   onExit?: () => void;
@@ -72,13 +87,21 @@ const SummaryPage: React.FC<SummaryPageProps> = ({
   timeLimitMinutes,
   passingScore,
   performanceThreshold,
+  maxAttempts,
   currentAttempt,
   attemptHistory = [],
   platformStats,
+  leaderboard = [],
+  userPosition,
   onRetry,
   onExit,
   onReviewAnswers
 }) => {
+  
+  // Calcular intentos usados y restantes
+  const attemptsUsed = attemptHistory.length;
+  const attemptsRemaining = maxAttempts ? maxAttempts - attemptsUsed : null; // null = ilimitados
+  const canRetry = !maxAttempts || (attemptsRemaining !== null && attemptsRemaining > 0);
   
   // Calcular promedio de intentos previos
   const calculateStudentAverage = () => {
@@ -560,25 +583,146 @@ const SummaryPage: React.FC<SummaryPageProps> = ({
         </div>
       )}
 
+      {/* Tabla de Clasificación (Top 30) */}
+      {leaderboard && leaderboard.length > 0 && (
+        <div className={styles.leaderboardSection}>
+          <div className={styles.sectionHeader}>
+            <Award size={24} className={styles.sectionIcon} />
+            <h2 className={styles.sectionTitle}>Tabla de Clasificación</h2>
+          </div>
+          <p className={styles.sectionSubtitle}>
+            Top 30 mejores resultados en este simulacro
+            {userPosition && (
+              <span className={styles.userPositionBadge}>
+                Tu posición: #{userPosition}
+              </span>
+            )}
+          </p>
+
+          <div className={styles.leaderboardContainer}>
+            <div className={styles.leaderboardHeader}>
+              <div className={styles.leaderboardHeaderCell} style={{ width: '60px' }}>Pos</div>
+              <div className={styles.leaderboardHeaderCell} style={{ flex: 1 }}>Estudiante</div>
+              <div className={styles.leaderboardHeaderCell} style={{ width: '100px' }}>Puntaje</div>
+              <div className={styles.leaderboardHeaderCell} style={{ width: '100px' }}>Tiempo</div>
+              <div className={styles.leaderboardHeaderCell} style={{ width: '120px' }}>Fecha</div>
+            </div>
+
+            <div className={styles.leaderboardBody}>
+              {leaderboard.map((entry) => (
+                <div 
+                  key={entry.position}
+                  className={`${styles.leaderboardRow} ${entry.isCurrentUser ? styles.leaderboardRowHighlight : ''}`}
+                >
+                  <div className={styles.leaderboardCell} style={{ width: '60px' }}>
+                    <div className={styles.positionBadge}>
+                      {entry.position <= 3 ? (
+                        <span className={styles.positionMedal}>
+                          {entry.position === 1 ? '🥇' : entry.position === 2 ? '🥈' : '🥉'}
+                        </span>
+                      ) : (
+                        <span className={styles.positionNumber}>#{entry.position}</span>
+                      )}
+                    </div>
+                  </div>
+                  
+                  <div className={styles.leaderboardCell} style={{ flex: 1 }}>
+                    <div className={styles.userName}>
+                      {entry.userName}
+                      {entry.isCurrentUser && (
+                        <span className={styles.youBadge}>Tú</span>
+                      )}
+                    </div>
+                  </div>
+                  
+                  <div className={styles.leaderboardCell} style={{ width: '100px' }}>
+                    <div className={styles.scoreValue}>
+                      <span className={styles.scorePercentage}>{entry.percentage.toFixed(1)}%</span>
+                      <span className={styles.scorePoints}>({entry.score} pts)</span>
+                    </div>
+                  </div>
+                  
+                  <div className={styles.leaderboardCell} style={{ width: '100px' }}>
+                    <div className={styles.timeValue}>
+                      {Math.floor(entry.timeSpent / 60)}:{(entry.timeSpent % 60).toString().padStart(2, '0')}
+                    </div>
+                  </div>
+                  
+                  <div className={styles.leaderboardCell} style={{ width: '120px' }}>
+                    <div className={styles.dateValue}>
+                      {entry.date.toLocaleDateString('es-ES', { 
+                        day: '2-digit', 
+                        month: 'short',
+                        year: 'numeric'
+                      })}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {userPosition && userPosition > 30 && (
+            <div className={styles.userPositionNotice}>
+              <Activity size={18} />
+              <span>
+                Estás en la posición <strong>#{userPosition}</strong>. 
+                ¡Sigue mejorando para entrar al Top 30!
+              </span>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Acciones */}
       <div className={styles.actions}>
-        {onReviewAnswers && (
-          <button onClick={onReviewAnswers} className={styles.actionButtonSecondary}>
-            <BarChart3 size={20} />
-            Ver Respuestas Detalladas
-          </button>
+        {/* Información de intentos */}
+        {maxAttempts && (
+          <div className={styles.attemptsInfo}>
+            <div className={styles.attemptsInfoIcon}>
+              <Target size={20} color={canRetry ? '#3b82f6' : '#ef4444'} />
+            </div>
+            <div className={styles.attemptsInfoText}>
+              <div className={styles.attemptsInfoLabel}>Intentos realizados</div>
+              <div className={styles.attemptsInfoValue}>
+                {attemptsUsed} de {maxAttempts}
+                {attemptsRemaining !== null && (
+                  <span className={styles.attemptsRemaining}>
+                    {attemptsRemaining > 0 
+                      ? ` (${attemptsRemaining} restante${attemptsRemaining !== 1 ? 's' : ''})` 
+                      : ' (sin intentos restantes)'}
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
         )}
-        {onRetry && (
-          <button onClick={onRetry} className={styles.actionButtonPrimary}>
-            <RefreshCw size={20} />
-            Intentar Nuevamente
-          </button>
-        )}
-        {onExit && (
-          <button onClick={onExit} className={styles.actionButtonOutline}>
-            Finalizar
-          </button>
-        )}
+
+        {/* Botones de acción */}
+        <div className={styles.actionButtons}>
+          {onReviewAnswers && (
+            <button onClick={onReviewAnswers} className={styles.actionButtonSecondary}>
+              <Eye size={20} />
+              Revisar Preguntas
+            </button>
+          )}
+          {onRetry && (
+            <button 
+              onClick={onRetry} 
+              className={styles.actionButtonPrimary}
+              disabled={!canRetry}
+              title={!canRetry ? 'No quedan intentos disponibles' : 'Volver a presentar el simulacro'}
+            >
+              <RefreshCw size={20} />
+              Volver a Presentar
+            </button>
+          )}
+          {onExit && (
+            <button onClick={onExit} className={styles.actionButtonOutline}>
+              Salir
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );

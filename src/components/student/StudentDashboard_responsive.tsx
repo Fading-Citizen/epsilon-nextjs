@@ -7,6 +7,7 @@ import { useAuth } from '@/lib/auth/AuthContext';
 import { useRouter } from 'next/navigation';
 import SimulacroViewer from './SimulacroViewer';
 import ServicesStore from './ServicesStore';
+import SummaryPage from './SummaryPage';
 
 const StudentDashboard = () => {
   const [currentPage, setCurrentPage] = useState('dashboard');
@@ -47,6 +48,20 @@ const StudentDashboard = () => {
   
   const [showAccessDeniedModal, setShowAccessDeniedModal] = useState(false);
   const [deniedServiceInfo, setDeniedServiceInfo] = useState<{servicio: string, tipo: string, nombre: string} | null>(null);
+  
+  // Estado para Mis Informes
+  const [selectedInforme, setSelectedInforme] = useState<any>(null);
+  
+  // Estados para rachas (streaks)
+  const [userStreak, setUserStreak] = useState({
+    currentStreak: 7,
+    longestStreak: 15,
+    lastActivityDate: new Date().toISOString().split('T')[0],
+    totalActiveDays: 42
+  });
+  
+  // Estado para modo vacaciones
+  const [onVacation, setOnVacation] = useState(false);
 
   // Función para verificar acceso a un servicio
   const tieneAccesoAServicio = (servicio: string): boolean => {
@@ -140,9 +155,33 @@ const StudentDashboard = () => {
     }
   };
 
+  // Resultados de simulacros completados (en producción vendría de la BD)
+  const userSimulacroResults: { [key: number]: { score: number; completed: boolean } } = {
+    1: { score: 85, completed: true },
+    2: { score: 92, completed: true },
+    4: { score: 70, completed: true },
+    5: { score: 78, completed: true },
+    6: { score: 88, completed: true }
+  };
+
   // Funciones auxiliares para Simulacros
   const canAccessSimulacro = (simulacro: any) => {
-    // Simulacros de muestra siempre son accesibles
+    // Verificar prerequisitos primero
+    if (simulacro.prerequisiteSimulacroId) {
+      const prerequisiteResult = userSimulacroResults[simulacro.prerequisiteSimulacroId];
+      
+      // Si no ha completado el prerequisito, no puede acceder
+      if (!prerequisiteResult || !prerequisiteResult.completed) {
+        return false;
+      }
+      
+      // Si requiere puntaje mínimo y no lo alcanzó, no puede acceder
+      if (simulacro.minimumScoreRequired && prerequisiteResult.score < simulacro.minimumScoreRequired) {
+        return false;
+      }
+    }
+    
+    // Simulacros de muestra siempre son accesibles (si pasó la verificación de prerequisitos)
     if (simulacro.isSample) return true;
     
     // Plan premium o enterprise tienen acceso ilimitado
@@ -459,6 +498,26 @@ const StudentDashboard = () => {
 
   
   const renderSimulacros = () => {
+    // Función auxiliar para obtener el motivo del bloqueo
+    const getBlockedReason = (simulacro: any): string => {
+      // Verificar prerequisitos
+      if (simulacro.prerequisiteSimulacroId) {
+        const prerequisiteResult = userSimulacroResults[simulacro.prerequisiteSimulacroId];
+        const prerequisiteName = simulacros.find((s: any) => s.id === simulacro.prerequisiteSimulacroId)?.nombre || 'prerequisito';
+        
+        if (!prerequisiteResult || !prerequisiteResult.completed) {
+          return `🔒 Debes completar "${prerequisiteName}" primero`;
+        }
+        
+        if (simulacro.minimumScoreRequired && prerequisiteResult.score < simulacro.minimumScoreRequired) {
+          return `🔒 Necesitas al menos ${simulacro.minimumScoreRequired}% en "${prerequisiteName}" (obtuviste ${prerequisiteResult.score}%)`;
+        }
+      }
+      
+      // Verificar límite de plan
+      return '🔒 Has alcanzado el límite mensual. Mejora tu plan para acceso ilimitado.';
+    };
+    
     const simulacros = [
       {
         id: 1,
@@ -474,7 +533,9 @@ const StudentDashboard = () => {
         servicio: 'ICFES',
         tags: ['🆓 MUESTRA', 'Matemáticas', 'Básico'],
         isSample: true,
-        requiresSubscription: false
+        requiresSubscription: false,
+        prerequisiteSimulacroId: null,
+        minimumScoreRequired: null
       },
       {
         id: 2,
@@ -490,7 +551,9 @@ const StudentDashboard = () => {
         servicio: 'ICFES',
         tags: ['💎 PREMIUM', 'Física', 'Completo'],
         isSample: false,
-        requiresSubscription: true
+        requiresSubscription: true,
+        prerequisiteSimulacroId: null,
+        minimumScoreRequired: null
       },
       {
         id: 3,
@@ -500,13 +563,15 @@ const StudentDashboard = () => {
         tiempo: '100 min',
         ultimoIntento: null,
         fecha: null,
-        estado: 'disponible',
+        estado: 'bloqueado',
         color: '#8b5cf6',
         categoria: 'ICFES',
         servicio: 'ICFES',
-        tags: ['💎 PREMIUM', 'Química', 'Avanzado'],
+        tags: ['💎 PREMIUM', 'Química', 'Avanzado', '🔒 BLOQUEADO'],
         isSample: false,
-        requiresSubscription: true
+        requiresSubscription: true,
+        prerequisiteSimulacroId: 2, // Requiere completar el simulacro de Física
+        minimumScoreRequired: 80 // Con al menos 80%
       },
       {
         id: 4,
@@ -522,7 +587,9 @@ const StudentDashboard = () => {
         servicio: 'Saber Pro',
         tags: ['🆓 GRATIS', 'Razonamiento', 'Práctica'],
         isSample: true,
-        requiresSubscription: false
+        requiresSubscription: false,
+        prerequisiteSimulacroId: null,
+        minimumScoreRequired: null
       },
       {
         id: 5,
@@ -538,7 +605,9 @@ const StudentDashboard = () => {
         servicio: 'Admisiones',
         tags: ['💎 PREMIUM', 'Cálculo', 'Universitario'],
         isSample: false,
-        requiresSubscription: true
+        requiresSubscription: true,
+        prerequisiteSimulacroId: 1, // Requiere matemáticas básico
+        minimumScoreRequired: 75
       },
       {
         id: 6,
@@ -554,7 +623,9 @@ const StudentDashboard = () => {
         servicio: 'Saber Pro',
         tags: ['💎 PREMIUM', 'Razonamiento', 'Evaluación'],
         isSample: false,
-        requiresSubscription: true
+        requiresSubscription: true,
+        prerequisiteSimulacroId: null,
+        minimumScoreRequired: null
       }
     ];
 
@@ -861,10 +932,11 @@ const StudentDashboard = () => {
                       fontSize: '0.875rem',
                       color: '#ef4444',
                       display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.5rem'
+                      alignItems: 'flex-start',
+                      gap: '0.5rem',
+                      lineHeight: '1.5'
                     }}>
-                      🔒 <span>Has alcanzado el límite mensual. Mejora tu plan para acceso ilimitado.</span>
+                      <span>{getBlockedReason(simulacro)}</span>
                     </div>
                   )}
                   
@@ -1222,8 +1294,107 @@ const StudentDashboard = () => {
   };
 
   const renderMisInformes = () => {
-    // Estado para el informe seleccionado
-    const [selectedInforme, setSelectedInforme] = React.useState<any>(null);
+    // Función para generar leaderboard de ejemplo para un simulacro
+    const generateLeaderboard = (simulacroId: string, userScore: number, totalQuestions: number) => {
+      const nombres = [
+        'Ana García', 'Carlos Rodríguez', 'María López', 'Juan Pérez', 'Laura Martínez',
+        'Diego Silva', 'Valentina Torres', 'Andrés Gómez', 'Camila Ruiz', 'Santiago Morales',
+        'Isabella Castro', 'Mateo Vargas', 'Sofía Ramírez', 'Nicolás Jiménez', 'Daniela Herrera',
+        'Felipe Sánchez', 'Gabriela Ortiz', 'Lucas Mendoza', 'Valeria Rojas', 'Sebastián Cruz',
+        'Alejandra Flores', 'David Navarro', 'Paula Gutiérrez', 'Manuel Ríos', 'Carolina Mejía',
+        'Tomás Aguilar', 'Natalia Medina', 'Ricardo Parra', 'Fernanda Vega', 'Jorge Delgado'
+      ];
+      
+      const leaderboard = [];
+      const baseDate = new Date();
+      
+      // Generar top 30
+      for (let i = 0; i < 30; i++) {
+        const score = totalQuestions - Math.floor(Math.random() * (i + 1) * 0.5);
+        const percentage = (score / totalQuestions) * 100;
+        const timeSpent = 2400 + Math.floor(Math.random() * 1800); // 40-70 minutos
+        const daysAgo = Math.floor(Math.random() * 30);
+        const date = new Date(baseDate);
+        date.setDate(date.getDate() - daysAgo);
+        
+        leaderboard.push({
+          position: i + 1,
+          userName: nombres[i],
+          score: score,
+          percentage: percentage,
+          timeSpent: timeSpent,
+          date: date,
+          isCurrentUser: false
+        });
+      }
+      
+      // Insertar al usuario actual si su puntaje está en el top 30
+      const userPercentage = userScore;
+      let userPosition = leaderboard.findIndex(entry => userPercentage >= entry.percentage) + 1;
+      
+      if (userPosition === 0) userPosition = 31; // Fuera del top 30
+      
+      if (userPosition <= 30) {
+        // Insertar el usuario en la posición correcta
+        const userEntry = {
+          position: userPosition,
+          userName: user?.email?.split('@')[0] || 'Tú',
+          score: Math.round((userScore / 100) * totalQuestions),
+          percentage: userScore,
+          timeSpent: 3000, // 50 minutos
+          date: new Date(),
+          isCurrentUser: true
+        };
+        
+        leaderboard.splice(userPosition - 1, 0, userEntry);
+        leaderboard.pop(); // Remover el último para mantener 30
+        
+        // Actualizar posiciones
+        leaderboard.forEach((entry, index) => {
+          entry.position = index + 1;
+        });
+      }
+      
+      return { leaderboard, userPosition };
+    };
+    
+    // Umbrales de desempeño de ejemplo (en producción vendrían de la configuración del simulacro en Supabase)
+    const performanceThresholds = [
+      {
+        name: 'Superior 🏆',
+        minPercentage: 90,
+        maxPercentage: 100,
+        color: '#10b981',
+        messageHtml: '<h2>🎉 ¡Excelente Desempeño!</h2><p>Has demostrado un dominio <strong>excepcional</strong> de los temas evaluados. Tu preparación es sobresaliente.</p><p>✨ Sigue así, estás en camino al éxito!</p>'
+      },
+      {
+        name: 'Alto 🎯',
+        minPercentage: 75,
+        maxPercentage: 89.99,
+        color: '#3b82f6',
+        messageHtml: '<h2>👏 ¡Muy Buen Trabajo!</h2><p>Tu desempeño ha sido muy bueno. Demuestras un conocimiento <strong>sólido</strong> de la mayoría de temas.</p><p>💪 Con un poco más de práctica alcanzarás la excelencia.</p>'
+      },
+      {
+        name: 'Medio 📚',
+        minPercentage: 60,
+        maxPercentage: 74.99,
+        color: '#f59e0b',
+        messageHtml: '<h2>📖 Buen Esfuerzo</h2><p>Has alcanzado un nivel <strong>aceptable</strong>, pero hay espacio para mejorar.</p><p>📝 Te recomendamos repasar los temas donde tuviste dificultades y practicar más ejercicios.</p>'
+      },
+      {
+        name: 'Bajo ⚠️',
+        minPercentage: 0,
+        maxPercentage: 59.99,
+        color: '#ef4444',
+        messageHtml: '<h2>💪 Necesitas Mejorar</h2><p>Tus resultados indican que necesitas <strong>reforzar conceptos fundamentales</strong>.</p><p>📚 No te desanimes! Te recomendamos:<ul><li>Revisar el material de estudio</li><li>Practicar más ejercicios</li><li>Consultar con tu profesor</li></ul></p>'
+      }
+    ];
+
+    const getPerformanceThreshold = (percentage: number) => {
+      return performanceThresholds.find(
+        threshold => percentage >= threshold.minPercentage && percentage <= threshold.maxPercentage
+      );
+    };
 
     // Datos de ejemplo de informes completados (en producción vendrían de Supabase)
     const misInformes = [
@@ -1285,71 +1456,88 @@ const StudentDashboard = () => {
       const informe = misInformes.find(i => i.id === informeId);
       if (!informe) return;
 
-      // Crear informe completo con todos los detalles
-      const informeCompleto = {
-        ...informe,
-        estudianteId: user?.id || 'current-user',
-        estudianteNombre: user?.email?.split('@')[0] || 'Estudiante',
-        preguntas: Array.from({ length: 5 }, (_, i) => ({
-          id: `q${i}`,
-          pregunta: `Pregunta de ejemplo ${i + 1}`,
-          respuestaCorrecta: 'A',
-          respuestaUsuario: i % 3 === 0 ? 'B' : 'A',
-          correcta: i % 3 !== 0,
-          materia: ['Matemáticas', 'Español', 'Ciencias'][i % 3],
-          dificultad: ['facil', 'media', 'dificil'][i % 3] as 'facil' | 'media' | 'dificil',
-          tiempoRespuesta: 45 + i * 10
-        })),
-        analisisPorMateria: [
-          { materia: 'Matemáticas', correctas: 12, incorrectas: 3, porcentaje: 80 },
-          { materia: 'Español', correctas: 10, incorrectas: 5, porcentaje: 66.7 },
-          { materia: 'Ciencias', correctas: 14, incorrectas: 1, porcentaje: 93.3 }
-        ],
-        analisisPorDificultad: [
-          { dificultad: 'facil', correctas: 13, incorrectas: 2, porcentaje: 86.7 },
-          { dificultad: 'media', correctas: 11, incorrectas: 4, porcentaje: 73.3 },
-          { dificultad: 'dificil', correctas: 8, incorrectas: 7, porcentaje: 53.3 }
-        ],
-        tiempoPromedioPorPregunta: 67.5,
-        recomendaciones: [
-          'Reforzar conceptos de geometría analítica',
-          'Practicar más ejercicios de lectura crítica',
-          'Mejorar velocidad de respuesta en preguntas fáciles'
-        ]
+      // Determinar el umbral de desempeño alcanzado
+      const performanceThreshold = getPerformanceThreshold(informe.porcentaje);
+
+      // Preparar datos en formato SummaryPage
+      const currentAttempt = {
+        score: informe.porcentaje,
+        percentage: informe.porcentaje,
+        timeSpentSeconds: informe.duracion * 60,
+        correctAnswers: informe.preguntasCorrectas,
+        incorrectAnswers: informe.preguntasIncorrectas,
+        blankAnswers: informe.preguntasNoRespondidas,
+        passed: informe.porcentaje >= 70,
+        date: new Date(informe.fecha)
       };
 
-      setSelectedInforme(informeCompleto);
+      const platformStats = {
+        totalStudents: 423,
+        totalAttempts: 1547,
+        averageScore: 72.5,
+        averageTime: 85 * 60,
+        passRate: 68.5
+      };
+
+      // Simular historial de intentos (en producción vendría de Supabase)
+      const attemptHistory = misInformes
+        .filter(i => i.simulacroId === informe.simulacroId)
+        .map((i, index) => ({
+          attemptNumber: index + 1,
+          date: new Date(i.fecha),
+          score: i.porcentaje,
+          timeSpent: i.duracion * 60,
+          correctAnswers: i.preguntasCorrectas,
+          incorrectAnswers: i.preguntasIncorrectas,
+          blankAnswers: i.preguntasNoRespondidas
+        }));
+
+      // Generar tabla de clasificación (Top 30)
+      const { leaderboard, userPosition } = generateLeaderboard(
+        informe.simulacroId, 
+        informe.porcentaje, 
+        informe.totalPreguntas
+      );
+
+      setSelectedInforme({
+        simulacroTitle: informe.simulacroNombre,
+        totalQuestions: informe.totalPreguntas,
+        timeLimitMinutes: informe.duracion,
+        passingScore: 70,
+        performanceThreshold,
+        maxAttempts: 3, // TODO: Obtener de configuración del simulacro en Supabase
+        currentAttempt,
+        attemptHistory,
+        platformStats,
+        leaderboard,
+        userPosition
+      });
     };
 
-    // Si hay un informe seleccionado, mostrar el SimulacroReport
+    // Si hay un informe seleccionado, mostrar SummaryPage
     if (selectedInforme) {
-      // Importar dinámicamente el componente SimulacroReport
-      const SimulacroReport = require('./SimulacroReport').default;
       return (
-        <div style={{ padding: '2rem' }}>
-          <button
-            onClick={() => setSelectedInforme(null)}
-            style={{
-              background: safeTheme.colors.current.background.card,
-              color: safeTheme.colors.current.text.primary,
-              border: `1px solid ${safeTheme.colors.current.border}`,
-              borderRadius: '8px',
-              padding: '0.75rem 1.5rem',
-              fontSize: '0.875rem',
-              fontWeight: '600',
-              cursor: 'pointer',
-              marginBottom: '1rem'
-            }}
-          >
-            ← Volver a Mis Informes
-          </button>
-          <SimulacroReport 
-            informe={selectedInforme} 
-            isDarkMode={isDarkMode}
-            showStudentInfo={false}
-            onClose={() => setSelectedInforme(null)}
-          />
-        </div>
+        <SummaryPage
+          simulacroTitle={selectedInforme.simulacroTitle}
+          totalQuestions={selectedInforme.totalQuestions}
+          timeLimitMinutes={selectedInforme.timeLimitMinutes}
+          passingScore={selectedInforme.passingScore}
+          performanceThreshold={selectedInforme.performanceThreshold}
+          maxAttempts={selectedInforme.maxAttempts}
+          currentAttempt={selectedInforme.currentAttempt}
+          attemptHistory={selectedInforme.attemptHistory}
+          platformStats={selectedInforme.platformStats}
+          leaderboard={selectedInforme.leaderboard}
+          userPosition={selectedInforme.userPosition}
+          onRetry={() => {
+            // Reintentar simulacro (opcional)
+            alert('Funcionalidad de reintentar simulacro próximamente');
+          }}
+          onExit={() => setSelectedInforme(null)}
+          onReviewAnswers={() => {
+            alert('Funcionalidad de revisar respuestas próximamente');
+          }}
+        />
       );
     }
 
@@ -2024,6 +2212,178 @@ const StudentDashboard = () => {
         ))}
       </div>
 
+      {/* Racha Diaria - Estilo Duolingo */}
+      <div style={{
+        background: isDarkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(255, 255, 255, 0.9)',
+        border: `1px solid ${isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'}`,
+        borderRadius: '20px',
+        padding: '2rem',
+        marginBottom: '2rem',
+        position: 'relative',
+        overflow: 'hidden'
+      }}>
+        <div style={{
+          position: 'absolute',
+          top: '-50px',
+          right: '-50px',
+          width: '200px',
+          height: '200px',
+          background: 'linear-gradient(135deg, #f59e0b, #ef4444)',
+          opacity: 0.1,
+          borderRadius: '50%',
+          filter: 'blur(40px)'
+        }} />
+        
+        <div style={{ position: 'relative', zIndex: 1 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+            <div>
+              <h3 style={{ 
+                margin: '0 0 0.5rem 0', 
+                fontSize: '1.5rem', 
+                fontWeight: 'bold', 
+                color: safeTheme.colors.current.text.primary,
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.75rem'
+              }}>
+                🔥 Racha de Estudio
+              </h3>
+              <p style={{ margin: 0, fontSize: '0.9rem', color: safeTheme.colors.current.text.secondary }}>
+                ¡Mantén tu racha activa estudiando cada día!
+              </p>
+            </div>
+            
+            <div style={{
+              background: 'linear-gradient(135deg, #f59e0b, #ef4444)',
+              borderRadius: '16px',
+              padding: '1.5rem 2rem',
+              textAlign: 'center' as const,
+              boxShadow: '0 8px 16px rgba(245, 158, 11, 0.3)'
+            }}>
+              <div style={{ fontSize: '3rem', fontWeight: 'bold', color: 'white', lineHeight: 1 }}>
+                {userStreak.currentStreak}
+              </div>
+              <div style={{ fontSize: '0.85rem', color: 'rgba(255, 255, 255, 0.9)', marginTop: '0.25rem' }}>
+                días seguidos
+              </div>
+            </div>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)', gap: '1.5rem', marginBottom: '1.5rem' }}>
+            <div style={{
+              background: isDarkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.03)',
+              borderRadius: '12px',
+              padding: '1.25rem',
+              textAlign: 'center' as const
+            }}>
+              <div style={{ fontSize: '1.8rem', marginBottom: '0.5rem' }}>🏅</div>
+              <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#f59e0b' }}>
+                {userStreak.longestStreak}
+              </div>
+              <div style={{ fontSize: '0.85rem', color: safeTheme.colors.current.text.secondary }}>
+                Racha más larga
+              </div>
+            </div>
+
+            <div style={{
+              background: isDarkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.03)',
+              borderRadius: '12px',
+              padding: '1.25rem',
+              textAlign: 'center' as const
+            }}>
+              <div style={{ fontSize: '1.8rem', marginBottom: '0.5rem' }}>📅</div>
+              <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#3b82f6' }}>
+                {userStreak.totalActiveDays}
+              </div>
+              <div style={{ fontSize: '0.85rem', color: safeTheme.colors.current.text.secondary }}>
+                Días activos totales
+              </div>
+            </div>
+
+            <div style={{
+              background: isDarkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.03)',
+              borderRadius: '12px',
+              padding: '1.25rem',
+              textAlign: 'center' as const
+            }}>
+              <div style={{ fontSize: '1.8rem', marginBottom: '0.5rem' }}>⏰</div>
+              <div style={{ fontSize: '1.1rem', fontWeight: 'bold', color: '#10b981' }}>
+                {userStreak.lastActivityDate === new Date().toISOString().split('T')[0] ? 'Hoy' : 'Ayer'}
+              </div>
+              <div style={{ fontSize: '0.85rem', color: safeTheme.colors.current.text.secondary }}>
+                Última actividad
+              </div>
+            </div>
+          </div>
+
+          <div style={{ 
+            display: 'flex', 
+            gap: '0.5rem', 
+            justifyContent: 'center',
+            padding: '1rem',
+            background: isDarkMode ? 'rgba(255, 255, 255, 0.03)' : 'rgba(0, 0, 0, 0.02)',
+            borderRadius: '12px'
+          }}>
+            {Array.from({ length: 7 }).map((_, index) => {
+              const dayNumber = 7 - index;
+              const isActive = dayNumber <= userStreak.currentStreak;
+              const isToday = dayNumber === userStreak.currentStreak;
+              
+              return (
+                <div key={index} style={{ textAlign: 'center' as const }}>
+                  <div style={{
+                    width: isMobile ? '32px' : '40px',
+                    height: isMobile ? '32px' : '40px',
+                    borderRadius: '10px',
+                    background: isActive 
+                      ? 'linear-gradient(135deg, #f59e0b, #ef4444)' 
+                      : isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '1.2rem',
+                    marginBottom: '0.5rem',
+                    border: isToday ? '2px solid #f59e0b' : 'none',
+                    boxShadow: isActive ? '0 4px 8px rgba(245, 158, 11, 0.3)' : 'none',
+                    transition: 'all 0.3s ease'
+                  }}>
+                    {isActive ? '🔥' : '⚪'}
+                  </div>
+                  <div style={{ 
+                    fontSize: '0.7rem', 
+                    color: isActive ? '#f59e0b' : safeTheme.colors.current.text.secondary,
+                    fontWeight: isToday ? 'bold' : 'normal'
+                  }}>
+                    {isToday ? 'Hoy' : `Día ${dayNumber}`}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          <div style={{ 
+            marginTop: '1.5rem', 
+            padding: '1rem', 
+            background: 'rgba(245, 158, 11, 0.1)', 
+            borderRadius: '12px',
+            border: '1px solid rgba(245, 158, 11, 0.2)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.75rem'
+          }}>
+            <div style={{ fontSize: '1.5rem' }}>💡</div>
+            <div>
+              <div style={{ fontWeight: '600', color: '#f59e0b', fontSize: '0.9rem' }}>
+                ¡Sigue así! Estás a solo {15 - userStreak.currentStreak} días de tu récord personal
+              </div>
+              <div style={{ fontSize: '0.8rem', color: safeTheme.colors.current.text.secondary, marginTop: '0.25rem' }}>
+                Completa cualquier actividad hoy para mantener tu racha
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 2fr', gap: '2rem' }}>
         {/* Panel lateral con logros y actividad */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
@@ -2465,6 +2825,115 @@ const StudentDashboard = () => {
                   e.target.style.boxShadow = 'none';
                 }}
               />
+            </div>
+            
+            {/* Modo Vacaciones */}
+            <div style={{
+              background: isDarkMode ? 'rgba(255, 255, 255, 0.03)' : 'rgba(0, 0, 0, 0.02)',
+              borderRadius: '12px',
+              padding: '1.5rem',
+              border: `1px solid ${isDarkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)'}`
+            }}>
+              <h4 style={{ margin: '0 0 1rem 0', fontSize: '1.1rem', fontWeight: '600', color: safeTheme.colors.current.text.primary, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                🏖️ Modo Vacaciones
+              </h4>
+              
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '1.25rem',
+                background: onVacation 
+                  ? 'rgba(245, 158, 11, 0.1)' 
+                  : isDarkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(255, 255, 255, 0.9)',
+                border: onVacation 
+                  ? '2px solid rgba(245, 158, 11, 0.3)' 
+                  : `2px solid ${isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'}`,
+                borderRadius: '12px',
+                transition: 'all 0.3s ease'
+              }}>
+                <div style={{ flex: 1 }}>
+                  <div style={{ 
+                    fontSize: '0.95rem', 
+                    fontWeight: '600', 
+                    color: safeTheme.colors.current.text.primary,
+                    marginBottom: '0.5rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem'
+                  }}>
+                    {onVacation ? '🏖️ Estás de vacaciones' : '📚 Modo Estudio Activo'}
+                  </div>
+                  <div style={{ 
+                    fontSize: '0.85rem', 
+                    color: safeTheme.colors.current.text.secondary,
+                    lineHeight: '1.5'
+                  }}>
+                    {onVacation 
+                      ? 'No recibirás notificaciones de marketing y no serás incluido en estadísticas comparativas'
+                      : 'Activa el modo vacaciones para pausar notificaciones y estadísticas durante tu descanso'
+                    }
+                  </div>
+                </div>
+                
+                <button
+                  onClick={() => setOnVacation(!onVacation)}
+                  style={{
+                    position: 'relative',
+                    width: '60px',
+                    height: '32px',
+                    borderRadius: '16px',
+                    border: 'none',
+                    cursor: 'pointer',
+                    transition: 'all 0.3s ease',
+                    background: onVacation 
+                      ? 'linear-gradient(135deg, #f59e0b, #d97706)' 
+                      : isDarkMode ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.2)',
+                    boxShadow: onVacation ? '0 4px 12px rgba(245, 158, 11, 0.4)' : 'none',
+                    marginLeft: '1rem',
+                    flexShrink: 0
+                  }}
+                >
+                  <div style={{
+                    position: 'absolute',
+                    top: '4px',
+                    left: onVacation ? '32px' : '4px',
+                    width: '24px',
+                    height: '24px',
+                    borderRadius: '50%',
+                    background: 'white',
+                    transition: 'all 0.3s ease',
+                    boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '0.7rem'
+                  }}>
+                    {onVacation ? '🏖️' : '📚'}
+                  </div>
+                </button>
+              </div>
+              
+              {onVacation && (
+                <div style={{
+                  marginTop: '1rem',
+                  padding: '1rem',
+                  background: 'rgba(245, 158, 11, 0.1)',
+                  border: '1px solid rgba(245, 158, 11, 0.3)',
+                  borderRadius: '10px',
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  gap: '0.75rem'
+                }}>
+                  <div style={{ fontSize: '1.2rem', flexShrink: 0 }}>ℹ️</div>
+                  <div style={{ fontSize: '0.85rem', color: safeTheme.colors.current.text.secondary, lineHeight: '1.6' }}>
+                    <strong style={{ color: '#f59e0b', display: 'block', marginBottom: '0.25rem' }}>
+                      Modo Vacaciones Activado
+                    </strong>
+                    Tu racha se mantendrá congelada mientras estés de vacaciones. No recibirás emails de marketing ni serás incluido en comparativas de rendimiento. Puedes seguir accediendo a tus cursos normalmente.
+                  </div>
+                </div>
+              )}
             </div>
             
             {/* Botones de acción */}
@@ -3386,11 +3855,13 @@ const StudentDashboard = () => {
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
                     <div>
                       <h3 style={{ 
-                        margin: 0, 
+                        marginTop: 0,
+                        marginRight: 0,
+                        marginBottom: '0.5rem',
+                        marginLeft: 0,
                         fontSize: '1.25rem', 
                         fontWeight: 'bold', 
-                        color: safeTheme.colors.current.text.primary,
-                        marginBottom: '0.5rem'
+                        color: safeTheme.colors.current.text.primary
                       }}>
                         {curso.nombre}
                       </h3>
@@ -3876,11 +4347,13 @@ const StudentDashboard = () => {
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
                     <div>
                       <h3 style={{ 
-                        margin: 0, 
+                        marginTop: 0,
+                        marginRight: 0,
+                        marginBottom: '0.5rem',
+                        marginLeft: 0,
                         fontSize: '1.25rem', 
                         fontWeight: 'bold', 
-                        color: safeTheme.colors.current.text.primary,
-                        marginBottom: '0.5rem'
+                        color: safeTheme.colors.current.text.primary
                       }}>
                         {curso.nombre}
                       </h3>
