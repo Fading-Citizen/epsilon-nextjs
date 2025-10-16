@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import styles from './QuizBuilder.module.css';
 import { ArrowLeft, Save, Plus, Trash2, Edit, Copy, Eye, Settings, Clock, Target, Users, FileText } from 'lucide-react';
+import ThresholdsEditor, { PerformanceThreshold } from './ThresholdsEditor';
 
 export interface QuizQuestion {
   id: string;
@@ -27,6 +28,10 @@ interface QuizSettings {
   shuffleOptions: boolean;
   showCorrectAnswers: boolean;
   allowReview: boolean;
+  allowSkip: boolean;
+  allowGoBack: boolean;
+  requireAllAnswers: boolean;
+  performanceThresholds: PerformanceThreshold[];
   publishImmediately: boolean;
   dueDate?: Date;
   availableFrom?: Date;
@@ -85,6 +90,35 @@ const QuizBuilder: React.FC<QuizBuilderProps> = ({ evaluation, onSave, onCancel 
     shuffleOptions: true,
     showCorrectAnswers: true,
     allowReview: true,
+    allowSkip: true,
+    allowGoBack: true,
+    requireAllAnswers: false,
+    performanceThresholds: [
+      {
+        id: 'excellent',
+        name: 'Excelente',
+        minPercentage: 90,
+        maxPercentage: 100,
+        color: '#10b981',
+        messageHtml: '<h3 style="color: #10b981;">¡Excelente Trabajo!</h3><p>Has demostrado un dominio sobresaliente del tema.</p>'
+      },
+      {
+        id: 'good',
+        name: 'Bueno',
+        minPercentage: 70,
+        maxPercentage: 89,
+        color: '#3b82f6',
+        messageHtml: '<h3 style="color: #3b82f6;">¡Buen Trabajo!</h3><p>Tienes un buen entendimiento del tema.</p>'
+      },
+      {
+        id: 'needs-improvement',
+        name: 'Necesita Mejorar',
+        minPercentage: 0,
+        maxPercentage: 69,
+        color: '#ef4444',
+        messageHtml: '<h3 style="color: #ef4444;">Necesitas Mejorar</h3><p>Te recomendamos repasar los temas y volver a intentarlo.</p>'
+      }
+    ],
     publishImmediately: false,
     availableFrom: new Date()
   });
@@ -521,8 +555,44 @@ const QuizBuilder: React.FC<QuizBuilderProps> = ({ evaluation, onSave, onCancel 
                   />{' '}
                   Permitir revisar
                 </label>
+                <label className={styles.checkboxItem}>
+                  <input
+                    type='checkbox'
+                    checked={settings.allowSkip}
+                    onChange={e =>
+                      setSettings({ ...settings, allowSkip: e.target.checked })
+                    }
+                  />{' '}
+                  Permitir saltar preguntas
+                </label>
+                <label className={styles.checkboxItem}>
+                  <input
+                    type='checkbox'
+                    checked={settings.allowGoBack}
+                    onChange={e =>
+                      setSettings({ ...settings, allowGoBack: e.target.checked })
+                    }
+                  />{' '}
+                  Permitir retroceder a pregunta anterior
+                </label>
+                <label className={styles.checkboxItem}>
+                  <input
+                    type='checkbox'
+                    checked={settings.requireAllAnswers}
+                    onChange={e =>
+                      setSettings({ ...settings, requireAllAnswers: e.target.checked })
+                    }
+                  />{' '}
+                  Requerir todas las respuestas antes de finalizar
+                </label>
               </div>
             </div>
+            
+            <ThresholdsEditor
+              thresholds={settings.performanceThresholds}
+              onChange={(thresholds) => setSettings({ ...settings, performanceThresholds: thresholds })}
+            />
+            
             <div className={styles.settingsSection}>
               <h3>Programación</h3>
               <label className={styles.checkboxItem}>

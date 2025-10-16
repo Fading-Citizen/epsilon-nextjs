@@ -122,6 +122,9 @@ export const PreviewTab: React.FC<PreviewTabProps> = ({
             <OptionItem enabled={settings.showCorrectAnswers} label="Mostrar respuestas correctas" />
             <OptionItem enabled={settings.showExplanations} label="Mostrar explicaciones" />
             <OptionItem enabled={settings.allowReview} label="Permitir revisión" />
+            <OptionItem enabled={settings.allowSkip} label="Permitir saltar preguntas" />
+            <OptionItem enabled={settings.allowGoBack} label="Permitir retroceder" />
+            <OptionItem enabled={settings.requireAllAnswers} label="Requerir todas las respuestas" />
             <OptionItem enabled={settings.showResultsImmediately} label="Resultados inmediatos" />
           </div>
         </div>
@@ -150,6 +153,65 @@ export const PreviewTab: React.FC<PreviewTabProps> = ({
               </div>
               <div style={{ fontSize: '0.875rem', color: '#b91c1c' }}>Difíciles</div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Performance Thresholds */}
+      {settings.performanceThresholds && settings.performanceThresholds.length > 0 && (
+        <div className={styles.settingsSection}>
+          <h3>Umbrales de Desempeño</h3>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            {settings.performanceThresholds
+              .sort((a, b) => b.minPercentage - a.minPercentage)
+              .map((threshold) => (
+              <div
+                key={threshold.id}
+                style={{
+                  background: 'white',
+                  border: `2px solid ${threshold.color}`,
+                  borderRadius: '8px',
+                  padding: '1rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '1rem'
+                }}
+              >
+                <div
+                  style={{
+                    width: '60px',
+                    height: '60px',
+                    background: threshold.color,
+                    borderRadius: '8px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: 'white',
+                    fontWeight: 700,
+                    fontSize: '0.875rem',
+                    textAlign: 'center',
+                    flexShrink: 0
+                  }}
+                >
+                  {threshold.minPercentage}%-{threshold.maxPercentage}%
+                </div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontWeight: 700, fontSize: '1.125rem', color: threshold.color, marginBottom: '0.5rem' }}>
+                    {threshold.name}
+                  </div>
+                  <div 
+                    style={{ 
+                      fontSize: '0.875rem', 
+                      color: '#64748b',
+                      padding: '0.75rem',
+                      background: '#f8fafc',
+                      borderRadius: '6px'
+                    }}
+                    dangerouslySetInnerHTML={{ __html: threshold.messageHtml }}
+                  />
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       )}

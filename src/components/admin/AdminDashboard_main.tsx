@@ -47,6 +47,8 @@ import GroupManager from './GroupManager';
 import AdminChatCenter from './AdminChatCenter';
 import ServicesManager from './ServicesManager';
 import UserManagement from './UserManagement';
+import StudentReportsManager from './StudentReportsManager';
+import EvaluationStatistics from './EvaluationStatistics';
 
 interface AdminDashboardProps {
   user: SupabaseUser;
@@ -89,8 +91,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user: currentUser }) =>
     { id: 'groups', label: 'Grupos', icon: Shield },
     { id: 'teachers', label: 'Administradores', icon: UserPlus },
     { id: 'services', label: 'Servicios', icon: Package },
+    { id: 'statistics', label: 'Estadísticas', icon: BarChart3 },
+    { id: 'student-reports', label: 'Informes Simulacros', icon: TrendingUp },
     { id: 'messages', label: 'Mensajes', icon: MessageSquare },
-    { id: 'reports', label: 'Reportes', icon: TrendingUp },
     { id: 'profile', label: 'Perfil', icon: User }
   ];
 
@@ -946,187 +949,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user: currentUser }) =>
         return <UserManagement />;
       case 'services':
         return <ServicesManager />;
-      case 'reports':
-        return (
-          <div>
-            <div style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              marginBottom: '2rem'
-            }}>
-              <h2 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 'bold', color: theme.colors.current.text.primary }}>Reportes y Estadísticas</h2>
-              <button style={{
-                background: 'rgba(34, 197, 94, 0.2)',
-                border: '1px solid rgba(34, 197, 94, 0.3)',
-                borderRadius: '8px',
-                padding: '0.75rem 1.5rem',
-                color: '#22c55e',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.5rem',
-                fontWeight: '600'
-              }}>
-                <Download size={20} />
-                Exportar Reportes
-              </button>
-            </div>
-
-            {/* Métricas principales */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
-              {[
-                { title: 'Total Estudiantes', value: '142', change: '+12%', color: '#22c55e' },
-                { title: 'Tasa de Finalización', value: '78%', change: '+5%', color: '#3b82f6' },
-                { title: 'Calificación Promedio', value: '8.5', change: '+0.3', color: '#8b5cf6' },
-                { title: 'Tiempo Promedio', value: '4.2h', change: '-0.5h', color: '#f59e0b' }
-              ].map((metric, index) => (
-                <div key={index} style={{
-                  background: isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)',
-                  border: `1px solid ${isDarkMode ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.1)'}`,
-                  borderRadius: '12px',
-                  padding: '1.5rem',
-                  textAlign: 'center'
-                }}>
-                  <h3 style={{ margin: '0 0 0.5rem 0', fontSize: '2rem', fontWeight: 'bold', color: metric.color }}>{metric.value}</h3>
-                  <p style={{ margin: '0 0 0.5rem 0', color: theme.colors.current.text.secondary, fontSize: '0.875rem' }}>{metric.title}</p>
-                  <span style={{ 
-                    fontSize: '0.75rem', 
-                    fontWeight: '600',
-                    color: metric.change.startsWith('+') ? '#22c55e' : '#ef4444'
-                  }}>{metric.change}</span>
-                </div>
-              ))}
-            </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '1.5rem', marginBottom: '2rem' }}>
-              {/* Gráfico de progreso por curso */}
-              <div style={{
-                background: isDarkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.02)',
-                border: `1px solid ${isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'}`,
-                borderRadius: '12px',
-                padding: '1.5rem'
-              }}>
-                <h3 style={{ margin: '0 0 1.5rem 0', fontSize: '1.1rem', fontWeight: '600', color: theme.colors.current.text.primary }}>Progreso por Curso</h3>
-                
-                {[
-                  { course: 'Cálculo Diferencial', students: 45, completed: 35, progress: 78 },
-                  { course: 'Álgebra Lineal', students: 32, completed: 21, progress: 66 },
-                  { course: 'Física Cuántica', students: 28, completed: 12, progress: 43 },
-                  { course: 'Estadística Avanzada', students: 37, completed: 29, progress: 78 }
-                ].map((course, index) => (
-                  <div key={index} style={{ marginBottom: '1.5rem' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                      <span style={{ color: theme.colors.current.text.primary, fontWeight: '600' }}>{course.course}</span>
-                      <span style={{ color: theme.colors.current.text.secondary, fontSize: '0.875rem' }}>
-                        {course.completed}/{course.students} ({course.progress}%)
-                      </span>
-                    </div>
-                    <div style={{
-                      background: isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)',
-                      borderRadius: '8px',
-                      height: '12px',
-                      overflow: 'hidden'
-                    }}>
-                      <div style={{
-                        background: `hsl(${course.progress * 1.2}, 70%, 50%)`,
-                        height: '100%',
-                        width: `${course.progress}%`,
-                        transition: 'width 0.3s ease'
-                      }}></div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {/* Top estudiantes */}
-              <div style={{
-                background: isDarkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.02)',
-                border: `1px solid ${isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'}`,
-                borderRadius: '12px',
-                padding: '1.5rem'
-              }}>
-                <h3 style={{ margin: '0 0 1.5rem 0', fontSize: '1.1rem', fontWeight: '600', color: theme.colors.current.text.primary }}>Top Estudiantes</h3>
-                
-                {[
-                  { name: 'Ana Rodríguez', score: 9.8, course: 'Física Cuántica' },
-                  { name: 'María García', score: 9.5, course: 'Cálculo Diferencial' },
-                  { name: 'Carlos López', score: 9.2, course: 'Álgebra Lineal' },
-                  { name: 'Sofia Martín', score: 9.0, course: 'Estadística' },
-                  { name: 'Juan Pérez', score: 8.9, course: 'Cálculo Diferencial' }
-                ].map((student, index) => (
-                  <div key={index} style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '1rem',
-                    marginBottom: '1rem',
-                    padding: '0.75rem',
-                    borderRadius: '8px',
-                    background: index < 3 ? 'rgba(255, 255, 255, 0.05)' : 'transparent'
-                  }}>
-                    <div style={{
-                      width: '30px',
-                      height: '30px',
-                      background: index === 0 ? '#ffd700' : index === 1 ? '#c0c0c0' : index === 2 ? '#cd7f32' : 'rgba(255, 255, 255, 0.2)',
-                      borderRadius: '50%',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontSize: '0.875rem',
-                      fontWeight: 'bold',
-                      color: index < 3 ? '#000' : '#fff'
-                    }}>
-                      {index + 1}
-                    </div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: '0.875rem', fontWeight: '600', color: theme.colors.current.text.primary }}>{student.name}</div>
-                      <div style={{ fontSize: '0.75rem', color: 'rgba(255, 255, 255, 0.6)' }}>{student.course}</div>
-                    </div>
-                    <div style={{ fontSize: '0.875rem', fontWeight: 'bold', color: '#22c55e' }}>{student.score}</div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Actividad reciente */}
-            <div style={{
-              background: 'rgba(255, 255, 255, 0.05)',
-              border: '1px solid rgba(255, 255, 255, 0.1)',
-              borderRadius: '12px',
-              padding: '1.5rem'
-            }}>
-              <h3 style={{ margin: '0 0 1.5rem 0', fontSize: '1.1rem', fontWeight: '600', color: theme.colors.current.text.primary }}>Actividad de la Semana</h3>
-              
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '1rem' }}>
-                {['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'].map((day, index) => {
-                  const activity = [85, 92, 78, 96, 88, 45, 23][index];
-                  return (
-                    <div key={index} style={{ textAlign: 'center' }}>
-                      <div style={{ fontSize: '0.75rem', color: 'rgba(255, 255, 255, 0.6)', marginBottom: '0.5rem' }}>{day}</div>
-                      <div style={{
-                        height: '60px',
-                        background: isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)',
-                        borderRadius: '4px',
-                        display: 'flex',
-                        alignItems: 'end',
-                        padding: '4px'
-                      }}>
-                        <div style={{
-                          width: '100%',
-                          background: `hsl(${activity * 1.2}, 70%, 50%)`,
-                          borderRadius: '2px',
-                          height: `${activity}%`,
-                          transition: 'height 0.3s ease'
-                        }}></div>
-                      </div>
-                      <div style={{ fontSize: '0.75rem', color: theme.colors.current.text.primary, marginTop: '0.5rem', fontWeight: '600' }}>{activity}%</div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-        );
+      case 'statistics':
+        return <EvaluationStatistics isDarkMode={isDarkMode} />;
+      case 'student-reports':
+        return <StudentReportsManager isDarkMode={isDarkMode} />;
       case 'messages':
         return <AdminChatCenter teacherId={currentUser.id} />;
       case 'profile':

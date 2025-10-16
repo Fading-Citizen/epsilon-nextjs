@@ -70,6 +70,7 @@ const StudentDashboard = () => {
     { id: 'mis-cursos', label: 'Cursos Adquiridos', icon: BookOpen, color: '#8b5cf6' },
     { id: 'clases-vivo', label: 'Clases en Vivo', icon: Play, color: '#ef4444' },
     { id: 'simulacros', label: 'Simulacros', icon: Trophy, color: '#f59e0b' },
+    { id: 'mis-informes', label: 'Mis Informes', icon: FileText, color: '#10b981' },
     { id: 'noticias', label: 'Noticias', icon: Newspaper, color: '#6366f1' },
     { id: 'mensajes', label: 'Mensajes', icon: MessageSquare, color: '#ef4444' },
     { id: 'perfil', label: 'Perfil', icon: User, color: '#6366f1' }
@@ -1214,6 +1215,368 @@ const StudentDashboard = () => {
                 </button>
               </div>
             </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  const renderMisInformes = () => {
+    // Estado para el informe seleccionado
+    const [selectedInforme, setSelectedInforme] = React.useState<any>(null);
+
+    // Datos de ejemplo de informes completados (en producción vendrían de Supabase)
+    const misInformes = [
+      {
+        id: '1',
+        simulacroId: 'sim1',
+        simulacroNombre: 'Simulacro ICFES - Matemáticas',
+        servicio: 'ICFES',
+        fecha: '2025-10-15T10:30:00',
+        porcentaje: 85.5,
+        puntajeObtenido: 42,
+        puntajeTotal: 50,
+        duracion: 90,
+        preguntasCorrectas: 34,
+        preguntasIncorrectas: 6,
+        preguntasNoRespondidas: 2,
+        totalPreguntas: 40
+      },
+      {
+        id: '2',
+        simulacroId: 'sim2',
+        simulacroNombre: 'Simulacro ICFES - Lectura Crítica',
+        servicio: 'ICFES',
+        fecha: '2025-10-10T14:00:00',
+        porcentaje: 78.0,
+        puntajeObtenido: 39,
+        puntajeTotal: 50,
+        duracion: 75,
+        preguntasCorrectas: 31,
+        preguntasIncorrectas: 8,
+        preguntasNoRespondidas: 1,
+        totalPreguntas: 40
+      },
+      {
+        id: '3',
+        simulacroId: 'sim3',
+        simulacroNombre: 'Simulacro ICFES - Ciencias Naturales',
+        servicio: 'ICFES',
+        fecha: '2025-10-05T09:15:00',
+        porcentaje: 92.0,
+        puntajeObtenido: 46,
+        puntajeTotal: 50,
+        duracion: 85,
+        preguntasCorrectas: 37,
+        preguntasIncorrectas: 3,
+        preguntasNoRespondidas: 0,
+        totalPreguntas: 40
+      }
+    ];
+
+    const getColorByPercentage = (percentage: number) => {
+      if (percentage >= 80) return '#10b981';
+      if (percentage >= 60) return '#f59e0b';
+      return '#ef4444';
+    };
+
+    const handleViewInforme = (informeId: string) => {
+      // Aquí cargaríamos el informe completo desde Supabase
+      const informe = misInformes.find(i => i.id === informeId);
+      if (!informe) return;
+
+      // Crear informe completo con todos los detalles
+      const informeCompleto = {
+        ...informe,
+        estudianteId: user?.id || 'current-user',
+        estudianteNombre: user?.email?.split('@')[0] || 'Estudiante',
+        preguntas: Array.from({ length: 5 }, (_, i) => ({
+          id: `q${i}`,
+          pregunta: `Pregunta de ejemplo ${i + 1}`,
+          respuestaCorrecta: 'A',
+          respuestaUsuario: i % 3 === 0 ? 'B' : 'A',
+          correcta: i % 3 !== 0,
+          materia: ['Matemáticas', 'Español', 'Ciencias'][i % 3],
+          dificultad: ['facil', 'media', 'dificil'][i % 3] as 'facil' | 'media' | 'dificil',
+          tiempoRespuesta: 45 + i * 10
+        })),
+        analisisPorMateria: [
+          { materia: 'Matemáticas', correctas: 12, incorrectas: 3, porcentaje: 80 },
+          { materia: 'Español', correctas: 10, incorrectas: 5, porcentaje: 66.7 },
+          { materia: 'Ciencias', correctas: 14, incorrectas: 1, porcentaje: 93.3 }
+        ],
+        analisisPorDificultad: [
+          { dificultad: 'facil', correctas: 13, incorrectas: 2, porcentaje: 86.7 },
+          { dificultad: 'media', correctas: 11, incorrectas: 4, porcentaje: 73.3 },
+          { dificultad: 'dificil', correctas: 8, incorrectas: 7, porcentaje: 53.3 }
+        ],
+        tiempoPromedioPorPregunta: 67.5,
+        recomendaciones: [
+          'Reforzar conceptos de geometría analítica',
+          'Practicar más ejercicios de lectura crítica',
+          'Mejorar velocidad de respuesta en preguntas fáciles'
+        ]
+      };
+
+      setSelectedInforme(informeCompleto);
+    };
+
+    // Si hay un informe seleccionado, mostrar el SimulacroReport
+    if (selectedInforme) {
+      // Importar dinámicamente el componente SimulacroReport
+      const SimulacroReport = require('./SimulacroReport').default;
+      return (
+        <div style={{ padding: '2rem' }}>
+          <button
+            onClick={() => setSelectedInforme(null)}
+            style={{
+              background: safeTheme.colors.current.background.card,
+              color: safeTheme.colors.current.text.primary,
+              border: `1px solid ${safeTheme.colors.current.border}`,
+              borderRadius: '8px',
+              padding: '0.75rem 1.5rem',
+              fontSize: '0.875rem',
+              fontWeight: '600',
+              cursor: 'pointer',
+              marginBottom: '1rem'
+            }}
+          >
+            ← Volver a Mis Informes
+          </button>
+          <SimulacroReport 
+            informe={selectedInforme} 
+            isDarkMode={isDarkMode}
+            showStudentInfo={false}
+            onClose={() => setSelectedInforme(null)}
+          />
+        </div>
+      );
+    }
+
+    // Vista de lista de informes
+    return (
+      <div style={{ padding: '2rem' }}>
+        <div style={{ marginBottom: '2rem' }}>
+          <h1 style={{
+            margin: 0,
+            fontSize: '2rem',
+            fontWeight: 'bold',
+            background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent'
+          }}>
+            Mis Informes de Simulacros
+          </h1>
+          <p style={{
+            marginTop: '0.5rem',
+            color: safeTheme.colors.current.text.secondary,
+            fontSize: '0.95rem'
+          }}>
+            Revisa el rendimiento de tus simulacros completados
+          </p>
+        </div>
+
+        {/* Estadísticas resumidas */}
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+          gap: '1rem',
+          marginBottom: '2rem'
+        }}>
+          <div style={{
+            background: safeTheme.colors.current.background.card,
+            padding: '1.5rem',
+            borderRadius: '12px',
+            borderLeft: '4px solid #3b82f6'
+          }}>
+            <div style={{ fontSize: '2rem', fontWeight: '700', color: '#3b82f6' }}>
+              {misInformes.length}
+            </div>
+            <div style={{ marginTop: '0.25rem', fontSize: '0.875rem', color: safeTheme.colors.current.text.secondary }}>
+              Simulacros Completados
+            </div>
+          </div>
+
+          <div style={{
+            background: safeTheme.colors.current.background.card,
+            padding: '1.5rem',
+            borderRadius: '12px',
+            borderLeft: '4px solid #10b981'
+          }}>
+            <div style={{ fontSize: '2rem', fontWeight: '700', color: '#10b981' }}>
+              {(misInformes.reduce((sum, i) => sum + i.porcentaje, 0) / misInformes.length).toFixed(1)}%
+            </div>
+            <div style={{ marginTop: '0.25rem', fontSize: '0.875rem', color: safeTheme.colors.current.text.secondary }}>
+              Promedio General
+            </div>
+          </div>
+
+          <div style={{
+            background: safeTheme.colors.current.background.card,
+            padding: '1.5rem',
+            borderRadius: '12px',
+            borderLeft: '4px solid #f59e0b'
+          }}>
+            <div style={{ fontSize: '2rem', fontWeight: '700', color: '#f59e0b' }}>
+              {Math.max(...misInformes.map(i => i.porcentaje)).toFixed(1)}%
+            </div>
+            <div style={{ marginTop: '0.25rem', fontSize: '0.875rem', color: safeTheme.colors.current.text.secondary }}>
+              Mejor Puntaje
+            </div>
+          </div>
+        </div>
+
+        {/* Lista de informes */}
+        <div style={{ display: 'grid', gap: '1rem' }}>
+          {misInformes.map((informe) => (
+            <div
+              key={informe.id}
+              style={{
+                background: safeTheme.colors.current.background.card,
+                border: `1px solid ${safeTheme.colors.current.border}`,
+                borderRadius: '12px',
+                padding: '1.5rem',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                gap: '1rem',
+                cursor: 'pointer',
+                transition: 'all 0.2s'
+              }}
+              onClick={() => handleViewInforme(informe.id)}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'translateY(-2px)';
+                e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.1)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = 'none';
+              }}
+            >
+              <div style={{ flex: 1 }}>
+                <h3 style={{
+                  margin: 0,
+                  fontSize: '1.1rem',
+                  fontWeight: '600',
+                  color: safeTheme.colors.current.text.primary
+                }}>
+                  {informe.simulacroNombre}
+                </h3>
+                <div style={{
+                  marginTop: '0.5rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '1rem',
+                  flexWrap: 'wrap'
+                }}>
+                  <span style={{
+                    padding: '0.25rem 0.75rem',
+                    borderRadius: '6px',
+                    fontSize: '0.75rem',
+                    fontWeight: '600',
+                    background: `${getColorByPercentage(informe.porcentaje)}20`,
+                    color: getColorByPercentage(informe.porcentaje)
+                  }}>
+                    {informe.servicio}
+                  </span>
+                  <span style={{
+                    fontSize: '0.875rem',
+                    color: safeTheme.colors.current.text.secondary,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.25rem'
+                  }}>
+                    <Calendar size={14} />
+                    {new Date(informe.fecha).toLocaleDateString('es-ES')}
+                  </span>
+                  <span style={{
+                    fontSize: '0.875rem',
+                    color: safeTheme.colors.current.text.secondary,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.25rem'
+                  }}>
+                    <Clock size={14} />
+                    {informe.duracion} min
+                  </span>
+                </div>
+              </div>
+
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '2rem'
+              }}>
+                <div style={{ textAlign: 'center' }}>
+                  <div style={{
+                    fontSize: '2rem',
+                    fontWeight: '700',
+                    color: getColorByPercentage(informe.porcentaje)
+                  }}>
+                    {informe.porcentaje.toFixed(1)}%
+                  </div>
+                  <div style={{
+                    fontSize: '0.75rem',
+                    color: safeTheme.colors.current.text.secondary,
+                    marginTop: '0.25rem'
+                  }}>
+                    {informe.puntajeObtenido}/{informe.puntajeTotal} pts
+                  </div>
+                </div>
+
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleViewInforme(informe.id);
+                  }}
+                  style={{
+                    background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '8px',
+                    padding: '0.75rem 1.5rem',
+                    fontSize: '0.875rem',
+                    fontWeight: '600',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem'
+                  }}
+                >
+                  <Eye size={16} />
+                  Ver Informe
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {misInformes.length === 0 && (
+          <div style={{
+            textAlign: 'center',
+            padding: '4rem 2rem',
+            color: safeTheme.colors.current.text.secondary
+          }}>
+            <FileText size={48} style={{ margin: '0 auto', opacity: 0.5 }} />
+            <p style={{ marginTop: '1rem' }}>
+              Aún no has completado ningún simulacro
+            </p>
+            <button
+              onClick={() => navegarA('simulacros')}
+              style={{
+                marginTop: '1rem',
+                background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                padding: '0.75rem 1.5rem',
+                fontSize: '0.875rem',
+                fontWeight: '600',
+                cursor: 'pointer'
+              }}
+            >
+              Ir a Simulacros
+            </button>
           </div>
         )}
       </div>
@@ -2773,6 +3136,8 @@ const StudentDashboard = () => {
         return renderClasesVivo();
       case 'simulacros':
         return renderSimulacros();
+      case 'mis-informes':
+        return renderMisInformes();
       case 'noticias':
         return renderNoticias();
       case 'mensajes':

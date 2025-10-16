@@ -164,6 +164,22 @@ export const ResultsView: React.FC<ResultsViewProps> = ({
         </div>
       </div>
 
+      {/* Performance Threshold Message */}
+      {results.performanceThreshold && (
+        <div 
+          className={styles.performanceMessage}
+          style={{ 
+            borderLeft: `4px solid ${results.performanceThreshold.color}`,
+            background: `${results.performanceThreshold.color}10`
+          }}
+        >
+          <div 
+            className={styles.performanceMessageContent}
+            dangerouslySetInnerHTML={{ __html: results.performanceThreshold.messageHtml }}
+          />
+        </div>
+      )}
+
       {/* Stats Grid */}
       <div className={styles.statsGrid}>
         <div className={styles.statItem}>

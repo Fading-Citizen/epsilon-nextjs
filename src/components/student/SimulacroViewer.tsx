@@ -7,6 +7,7 @@ import {
   CheckCircle, XCircle, Eye, EyeOff, Award, Target, TrendingUp
 } from 'lucide-react';
 import { QuestionOption, ResultsView } from './SimulacroViewerComponents';
+import { PerformanceThreshold } from '../admin/ThresholdsEditor';
 
 // ============================================================================
 // INTERFACES
@@ -22,6 +23,10 @@ interface SimulacroData {
   showCorrectAnswers: boolean;
   showExplanations: boolean;
   allowReview: boolean;
+  allowSkip: boolean;
+  allowGoBack: boolean;
+  requireAllAnswers: boolean;
+  performanceThresholds: PerformanceThreshold[];
   shuffleQuestions: boolean;
   shuffleOptions: boolean;
   questions: Question[];
@@ -113,6 +118,35 @@ const SimulacroViewer: React.FC<SimulacroViewerProps> = ({
         showCorrectAnswers: true,
         showExplanations: true,
         allowReview: true,
+        allowSkip: true,
+        allowGoBack: true,
+        requireAllAnswers: false,
+        performanceThresholds: [
+          {
+            id: 'excellent',
+            name: 'Excelente',
+            minPercentage: 90,
+            maxPercentage: 100,
+            color: '#10b981',
+            messageHtml: '<h3 style="color: #10b981;">🎉 ¡Excelente trabajo!</h3><p>Has demostrado un dominio excepcional de los conceptos matemáticos básicos. ¡Sigue así!</p>'
+          },
+          {
+            id: 'good',
+            name: 'Bueno',
+            minPercentage: 70,
+            maxPercentage: 89,
+            color: '#3b82f6',
+            messageHtml: '<h3 style="color: #3b82f6;">👍 ¡Buen trabajo!</h3><p>Tienes un buen entendimiento de las matemáticas. Con un poco más de práctica alcanzarás la excelencia.</p>'
+          },
+          {
+            id: 'needs-improvement',
+            name: 'Necesita Mejorar',
+            minPercentage: 0,
+            maxPercentage: 69,
+            color: '#ef4444',
+            messageHtml: '<h3 style="color: #ef4444;">📚 Necesitas mejorar</h3><p>Te recomendamos repasar los conceptos fundamentales y practicar más ejercicios antes de volver a intentarlo.</p>'
+          }
+        ],
         shuffleQuestions: false,
         shuffleOptions: true,
         questions: generateMockQuestions()
@@ -238,7 +272,20 @@ const SimulacroViewer: React.FC<SimulacroViewerProps> = ({
   };
 
   const nextQuestion = () => goToQuestion(currentQuestionIndex + 1);
-  const previousQuestion = () => goToQuestion(currentQuestionIndex - 1);
+  
+  const previousQuestion = () => {
+    // Only allow going back if allowGoBack is enabled
+    if (simulacro?.allowGoBack) {
+      goToQuestion(currentQuestionIndex - 1);
+    }
+  };
+
+  const skipQuestion = () => {
+    // Skip to next question without requiring an answer
+    if (simulacro?.allowSkip) {
+      goToQuestion(currentQuestionIndex + 1);
+    }
+  };
 
   // ============================================================================
   // SUBMISSION
@@ -258,6 +305,15 @@ const SimulacroViewer: React.FC<SimulacroViewerProps> = ({
         );
       }).length || 0;
 
+      // Si requireAllAnswers está activado, no permitir enviar con preguntas sin responder
+      if (simulacro?.requireAllAnswers && unanswered > 0) {
+        alert(
+          `Debes responder todas las preguntas antes de finalizar. Te faltan ${unanswered} pregunta(s) por responder.`
+        );
+        return;
+      }
+
+      // Si no es obligatorio, solo advertir
       if (unanswered > 0) {
         const confirm = window.confirm(
           `Tienes ${unanswered} pregunta(s) sin responder. ¿Estás seguro de enviar el simulacro?`
@@ -310,6 +366,11 @@ const SimulacroViewer: React.FC<SimulacroViewerProps> = ({
     const percentage = totalPoints > 0 ? (earnedPoints / totalPoints) * 100 : 0;
     const passed = percentage >= simulacro.passingScore;
 
+    // Determinar el rango de desempeño alcanzado
+    const achievedThreshold = simulacro.performanceThresholds.find(
+      threshold => percentage >= threshold.minPercentage && percentage <= threshold.maxPercentage
+    );
+
     return {
       totalQuestions: simulacro.questions.length,
       answeredQuestions: Object.keys(answers).length,
@@ -318,6 +379,7 @@ const SimulacroViewer: React.FC<SimulacroViewerProps> = ({
       earnedPoints,
       percentage: Math.round(percentage * 100) / 100,
       passed,
+      performanceThreshold: achievedThreshold,
       questionResults,
       timeSpent: simulacro.timeLimitMinutes * 60 - timeRemaining
     };
@@ -380,6 +442,9 @@ const SimulacroViewer: React.FC<SimulacroViewerProps> = ({
     const answer = answers[qId];
     return answer.selectedOptionIds.length > 0 || answer.textAnswer;
   }).length;
+  
+  const unansweredCount = simulacro.questions.length - answeredCount;
+  const canSubmit = !simulacro.requireAllAnswers || unansweredCount === 0;
 
   return (
     <div className={styles.container}>
@@ -400,9 +465,16 @@ const SimulacroViewer: React.FC<SimulacroViewerProps> = ({
             <Clock size={20} />
             <span>{formatTime(timeRemaining)}</span>
           </div>
-          <button onClick={() => handleSubmit()} className={styles.submitButton}>
+          <button 
+            onClick={() => handleSubmit()} 
+            className={`${styles.submitButton} ${!canSubmit ? styles.submitDisabled : ''}`}
+            title={!canSubmit ? `Debes responder ${unansweredCount} pregunta(s) más` : 'Enviar simulacro'}
+          >
             <Send size={18} />
             <span>Enviar</span>
+            {simulacro.requireAllAnswers && unansweredCount > 0 && (
+              <span className={styles.pendingBadge}>{unansweredCount}</span>
+            )}
           </button>
         </div>
       </div>
@@ -466,8 +538,9 @@ const SimulacroViewer: React.FC<SimulacroViewerProps> = ({
           <div className={styles.navigation}>
             <button
               onClick={previousQuestion}
-              disabled={currentQuestionIndex === 0}
+              disabled={currentQuestionIndex === 0 || !simulacro.allowGoBack}
               className={styles.navButton}
+              title={!simulacro.allowGoBack ? 'No se permite retroceder' : ''}
             >
               <ChevronLeft size={18} />
               <span>Anterior</span>
@@ -476,6 +549,17 @@ const SimulacroViewer: React.FC<SimulacroViewerProps> = ({
             <div className={styles.navInfo}>
               {answeredCount} de {simulacro.questions.length} respondidas
             </div>
+
+            {simulacro.allowSkip && currentQuestionIndex < simulacro.questions.length - 1 && (
+              <button
+                onClick={skipQuestion}
+                className={`${styles.navButton} ${styles.skipButton}`}
+                title="Saltar esta pregunta sin responder"
+              >
+                <span>Saltar</span>
+                <ChevronRight size={18} />
+              </button>
+            )}
 
             <button
               onClick={nextQuestion}

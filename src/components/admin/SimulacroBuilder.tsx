@@ -10,6 +10,7 @@ import {
 import { QuestionsTab } from './QuestionsTab';
 import { QuestionEditorModal } from './QuestionEditorModal';
 import { PreviewTab } from './PreviewTab';
+import ThresholdsEditor, { PerformanceThreshold } from './ThresholdsEditor';
 
 // ============================================================================
 // INTERFACES Y TIPOS
@@ -71,6 +72,10 @@ export interface SimulacroSettings {
   showCorrectAnswers: boolean;
   showExplanations: boolean;
   allowReview: boolean;
+  allowSkip: boolean;
+  allowGoBack: boolean;
+  requireAllAnswers: boolean;
+  performanceThresholds: PerformanceThreshold[];
   showResultsImmediately: boolean;
   
   // Fechas de disponibilidad
@@ -132,6 +137,43 @@ const SimulacroBuilder: React.FC<SimulacroBuilderProps> = ({
     showCorrectAnswers: true,
     showExplanations: true,
     allowReview: true,
+    allowSkip: true,
+    allowGoBack: true,
+    requireAllAnswers: false,
+    performanceThresholds: [
+      {
+        id: 'excellent',
+        name: 'Superior',
+        minPercentage: 90,
+        maxPercentage: 100,
+        color: '#10b981',
+        messageHtml: '<h3 style="color: #10b981;">🏆 ¡Rendimiento Superior!</h3><p>Tu desempeño ha sido excepcional. Estás completamente preparado para el examen ICFES.</p>'
+      },
+      {
+        id: 'high',
+        name: 'Alto',
+        minPercentage: 75,
+        maxPercentage: 89,
+        color: '#3b82f6',
+        messageHtml: '<h3 style="color: #3b82f6;">⭐ ¡Buen Rendimiento!</h3><p>Tienes un buen nivel de preparación. Sigue practicando para alcanzar la excelencia.</p>'
+      },
+      {
+        id: 'medium',
+        name: 'Medio',
+        minPercentage: 50,
+        maxPercentage: 74,
+        color: '#f59e0b',
+        messageHtml: '<h3 style="color: #f59e0b;">📚 Rendimiento Medio</h3><p>Necesitas reforzar algunos temas. Te recomendamos repasar y volver a practicar.</p>'
+      },
+      {
+        id: 'low',
+        name: 'Bajo',
+        minPercentage: 0,
+        maxPercentage: 49,
+        color: '#ef4444',
+        messageHtml: '<h3 style="color: #ef4444;">📖 Necesitas Mejorar</h3><p>Es importante que dediques más tiempo al estudio. Revisa los temas fundamentales y practica nuevamente.</p>'
+      }
+    ],
     showResultsImmediately: true
   });
 
@@ -891,6 +933,33 @@ const SettingsTab: React.FC<{
           <label className={styles.checkboxLabel}>
             <input
               type="checkbox"
+              checked={settings.allowSkip}
+              onChange={(e) => setSettings({ ...settings, allowSkip: e.target.checked })}
+            />
+            <span>Permitir saltar preguntas sin responder</span>
+          </label>
+
+          <label className={styles.checkboxLabel}>
+            <input
+              type="checkbox"
+              checked={settings.allowGoBack}
+              onChange={(e) => setSettings({ ...settings, allowGoBack: e.target.checked })}
+            />
+            <span>Permitir retroceder a pregunta anterior</span>
+          </label>
+
+          <label className={styles.checkboxLabel}>
+            <input
+              type="checkbox"
+              checked={settings.requireAllAnswers}
+              onChange={(e) => setSettings({ ...settings, requireAllAnswers: e.target.checked })}
+            />
+            <span>Requerir todas las respuestas antes de finalizar</span>
+          </label>
+
+          <label className={styles.checkboxLabel}>
+            <input
+              type="checkbox"
               checked={settings.showResultsImmediately}
               onChange={(e) => setSettings({ ...settings, showResultsImmediately: e.target.checked })}
             />
@@ -898,6 +967,11 @@ const SettingsTab: React.FC<{
           </label>
         </div>
       </div>
+
+      <ThresholdsEditor
+        thresholds={settings.performanceThresholds}
+        onChange={(thresholds) => setSettings({ ...settings, performanceThresholds: thresholds })}
+      />
     </div>
   );
 };
