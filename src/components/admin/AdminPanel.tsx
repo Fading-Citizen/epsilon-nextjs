@@ -3,8 +3,9 @@
 import React from 'react';
 
 import { createClient } from '@/lib/supabase/client';
-import { Plus, Users, UserPlus, X, RefreshCw, Link2, Server, Database, Shield, Trash2, Power } from 'lucide-react';
+import { Plus, Users, UserPlus, X, RefreshCw, Link2, Server, Database, Shield, Trash2, Power, Package } from 'lucide-react';
 import { v4 as uuid } from 'uuid';
+import ServicesManager from './ServicesManager';
 
 interface Profile {
 	id: string;
@@ -45,7 +46,7 @@ const Pagination: React.FC<{page:number,total:number,onChange:(p:number)=>void}>
 	const [newTeacher, setNewTeacher] = React.useState({ name: '', email: '' });
 	const [newStudent, setNewStudent] = React.useState({ name: '', email: '', teacher_id: '' });
 	const [error, setError] = React.useState<string | null>(null);
-		const [activeTab, setActiveTab] = React.useState<'dashboard'|'teachers'|'students'|'assignments'>('dashboard');
+		const [activeTab, setActiveTab] = React.useState<'dashboard'|'teachers'|'students'|'assignments'|'services'>('dashboard');
 		const [locale] = React.useState<'es'|'en'>('es');
 		const t = (k:string) => translations[locale][k] || k;
 		const [teacherPage, setTeacherPage] = React.useState(1);
@@ -291,12 +292,14 @@ const Pagination: React.FC<{page:number,total:number,onChange:(p:number)=>void}>
 						<TabButton id='teachers' label={t('teachers')}/>
 						<TabButton id='students' label={t('students')}/>
 						<TabButton id='assignments' label={t('assignments')}/>
+						<TabButton id='services' label='Servicios'/>
 						<button onClick={load} style={{...styles.secondaryBtn, display:'flex',alignItems:'center',gap:6}} disabled={loading}><RefreshCw size={16} /> {loading? t('refreshing') : t('refresh')}</button>
 			</div>
 			{activeTab==='dashboard' && renderDashboard()}
 			{activeTab==='teachers' && renderTeachers()}
 			{activeTab==='students' && renderStudents()}
 			{activeTab==='assignments' && renderAssignments()}
+			{activeTab==='services' && <ServicesManager />}
 
 			{/* Modal nuevo profesor */}
 			{showTeacherModal && (

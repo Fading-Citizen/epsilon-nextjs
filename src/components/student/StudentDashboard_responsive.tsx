@@ -1,11 +1,12 @@
 'use client'
 
 import React, { useState, useEffect } from 'react';
-import { User, Bell, BookOpen, Award, TrendingUp, Calendar, Sun, Moon, LogOut, Search, Play, Clock, Users, Star, Eye, Menu, X, Home, GraduationCap, FileText, Trophy, MessageSquare, Plus, RefreshCw, BarChart, MessageCircle, Send, Camera, Save, Newspaper, Grid3X3, List, Filter, Tag, ChevronDown, SortAsc, SortDesc, Video, Mic, MicOff, VideoOff, Share, Settings, Volume2, PhoneOff, UserPlus, Copy, ExternalLink } from 'lucide-react';
+import { User, Bell, BookOpen, Award, TrendingUp, Calendar, Sun, Moon, LogOut, Search, Play, Clock, Users, Star, Eye, Menu, X, Home, GraduationCap, FileText, Trophy, MessageSquare, Plus, RefreshCw, BarChart, MessageCircle, Send, Camera, Save, Newspaper, Grid3X3, List, Filter, Tag, ChevronDown, SortAsc, SortDesc, Video, Mic, MicOff, VideoOff, Share, Settings, Volume2, PhoneOff, UserPlus, Copy, ExternalLink, ShoppingCart } from 'lucide-react';
 import { useTheme } from '@/themes/ThemeContext';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { useRouter } from 'next/navigation';
 import SimulacroViewer from './SimulacroViewer';
+import ServicesStore from './ServicesStore';
 
 const StudentDashboard = () => {
   const [currentPage, setCurrentPage] = useState('dashboard');
@@ -36,6 +37,27 @@ const StudentDashboard = () => {
     simulacrosMaximos: 5,
     renovacionMes: '2025-02-01'
   });
+
+  // Control de acceso por servicios/productos adquiridos
+  const [serviciosAdquiridos, setServiciosAdquiridos] = useState<string[]>([
+    'ICFES',           // Usuario tiene acceso a contenido ICFES
+    'Cursos Especializados'  // Usuario tiene acceso a cursos especializados
+    // Los servicios 'Saber Pro', 'Admisiones', 'Corporativo' NO están adquiridos
+  ]);
+  
+  const [showAccessDeniedModal, setShowAccessDeniedModal] = useState(false);
+  const [deniedServiceInfo, setDeniedServiceInfo] = useState<{servicio: string, tipo: string, nombre: string} | null>(null);
+
+  // Función para verificar acceso a un servicio
+  const tieneAccesoAServicio = (servicio: string): boolean => {
+    return serviciosAdquiridos.includes(servicio);
+  };
+
+  // Función para mostrar modal de acceso denegado
+  const mostrarAccesoDenegado = (servicio: string, tipo: 'simulacro' | 'curso', nombre: string) => {
+    setDeniedServiceInfo({ servicio, tipo, nombre });
+    setShowAccessDeniedModal(true);
+  };
   
   const { isDarkMode, toggleTheme, theme } = useTheme();
   const { user, signOut } = useAuth();
@@ -43,6 +65,7 @@ const StudentDashboard = () => {
 
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: Home, color: '#3b82f6' },
+    { id: 'tienda', label: 'Tienda', icon: ShoppingCart, color: '#f59e0b' },
     { id: 'oferta-academica', label: 'Oferta Académica', icon: GraduationCap, color: '#10b981' },
     { id: 'mis-cursos', label: 'Cursos Adquiridos', icon: BookOpen, color: '#8b5cf6' },
     { id: 'clases-vivo', label: 'Clases en Vivo', icon: Play, color: '#ef4444' },
@@ -140,6 +163,13 @@ const StudentDashboard = () => {
   };
 
   const handleIniciarSimulacro = (simulacro: any) => {
+    // 1. VERIFICAR ACCESO AL SERVICIO (Primera prioridad)
+    if (!tieneAccesoAServicio(simulacro.servicio)) {
+      mostrarAccesoDenegado(simulacro.servicio, 'simulacro', simulacro.nombre);
+      return;
+    }
+
+    // 2. VERIFICAR CUPO DE SUSCRIPCIÓN (Solo si tiene acceso al servicio)
     const canAccess = canAccessSimulacro(simulacro);
     
     if (!canAccess) {
@@ -147,7 +177,7 @@ const StudentDashboard = () => {
       return;
     }
     
-    // Si no es muestra y tiene plan gratuito, confirmar uso del cupo
+    // 3. Si no es muestra y tiene plan gratuito, confirmar uso del cupo
     if (!simulacro.isSample && userSubscription.plan === 'free') {
       const remaining = userSubscription.simulacrosMaximos - userSubscription.simulacrosUsados;
       const message = `Vas a usar 1 de tus ${remaining} simulacros restantes este mes. ¿Continuar?`;
@@ -157,9 +187,35 @@ const StudentDashboard = () => {
       }
     }
     
-    // Abrir el modal con el simulacro
+    // 4. Abrir el modal con el simulacro
     setActiveSimulacro(simulacro);
     setShowSimulacroViewer(true);
+  };
+
+  // Función para manejar inscripción a cursos
+  const handleInscribirseCurso = (curso: any) => {
+    // 1. VERIFICAR ACCESO AL SERVICIO
+    if (!tieneAccesoAServicio(curso.servicio)) {
+      mostrarAccesoDenegado(curso.servicio, 'curso', curso.nombre);
+      return;
+    }
+
+    // 2. Si tiene acceso, proceder con la inscripción
+    alert(`Inscripción al curso: ${curso.nombre}\nPrecio: $${curso.precio.toLocaleString()}\n\n¡Próximamente sistema de pagos!`);
+    // TODO: Implementar flujo de pago
+  };
+
+  // Función para acceder a curso adquirido
+  const handleAccederCurso = (curso: any) => {
+    // 1. VERIFICAR ACCESO AL SERVICIO
+    if (!tieneAccesoAServicio(curso.servicio)) {
+      mostrarAccesoDenegado(curso.servicio, 'curso', curso.nombre);
+      return;
+    }
+
+    // 2. Si tiene acceso, abrir el curso
+    alert(`Abriendo curso: ${curso.nombre}`);
+    // TODO: Navegar a la página del curso
   };
 
   // Detectar tamaño de pantalla
@@ -409,12 +465,12 @@ const StudentDashboard = () => {
         descripcion: 'Examen de muestra gratuito de matemáticas según el formato ICFES',
         preguntas: 20,
         tiempo: '40 min',
-        dificultad: 'Básico',
         ultimoIntento: '85%',
         fecha: '2025-08-25',
         estado: 'completado',
         color: '#10b981',
         categoria: 'ICFES',
+        servicio: 'ICFES',
         tags: ['🆓 MUESTRA', 'Matemáticas', 'Básico'],
         isSample: true,
         requiresSubscription: false
@@ -425,12 +481,12 @@ const StudentDashboard = () => {
         descripcion: 'Evaluación completa de conceptos fundamentales de física',
         preguntas: 45,
         tiempo: '90 min',
-        dificultad: 'Avanzado',
         ultimoIntento: '92%',
         fecha: '2025-08-20',
         estado: 'completado',
         color: '#3b82f6',
         categoria: 'ICFES',
+        servicio: 'ICFES',
         tags: ['💎 PREMIUM', 'Física', 'Completo'],
         isSample: false,
         requiresSubscription: true
@@ -441,12 +497,12 @@ const StudentDashboard = () => {
         descripcion: 'Examen de química orgánica e inorgánica nivel avanzado',
         preguntas: 50,
         tiempo: '100 min',
-        dificultad: 'Avanzado',
         ultimoIntento: null,
         fecha: null,
         estado: 'disponible',
         color: '#8b5cf6',
         categoria: 'ICFES',
+        servicio: 'ICFES',
         tags: ['💎 PREMIUM', 'Química', 'Avanzado'],
         isSample: false,
         requiresSubscription: true
@@ -457,12 +513,12 @@ const StudentDashboard = () => {
         descripcion: 'Práctica gratuita de razonamiento lógico y matemático',
         preguntas: 15,
         tiempo: '30 min',
-        dificultad: 'Intermedio',
         ultimoIntento: null,
         fecha: null,
         estado: 'disponible',
         color: '#10b981',
         categoria: 'Competencias',
+        servicio: 'Saber Pro',
         tags: ['🆓 GRATIS', 'Razonamiento', 'Práctica'],
         isSample: true,
         requiresSubscription: false
@@ -473,12 +529,12 @@ const StudentDashboard = () => {
         descripcion: 'Preparación completa para exámenes de admisión universitaria',
         preguntas: 60,
         tiempo: '120 min',
-        dificultad: 'Avanzado',
         ultimoIntento: '78%',
         fecha: '2025-08-15',
         estado: 'completado',
         color: '#ef4444',
         categoria: 'Universitario',
+        servicio: 'Admisiones',
         tags: ['💎 PREMIUM', 'Cálculo', 'Universitario'],
         isSample: false,
         requiresSubscription: true
@@ -489,12 +545,12 @@ const StudentDashboard = () => {
         descripcion: 'Competencias genéricas de razonamiento cuantitativo',
         preguntas: 40,
         tiempo: '90 min',
-        dificultad: 'Intermedio',
         ultimoIntento: '88%',
         fecha: '2025-08-10',
         estado: 'completado',
         color: '#f59e0b',
         categoria: 'Saber Pro',
+        servicio: 'Saber Pro',
         tags: ['💎 PREMIUM', 'Razonamiento', 'Evaluación'],
         isSample: false,
         requiresSubscription: true
@@ -652,42 +708,85 @@ const StudentDashboard = () => {
             : '1fr',
           gap: '1.5rem' 
         }}>
-          {sortedSimulacros.map((simulacro) => (
+          {sortedSimulacros.map((simulacro) => {
+            const tieneAcceso = tieneAccesoAServicio(simulacro.servicio);
+            return (
             <div key={simulacro.id} style={{
+              position: 'relative',
               background: isDarkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(255, 255, 255, 0.95)',
               border: `1px solid ${isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'}`,
-              borderLeft: `4px solid ${simulacro.color}`,
+              borderLeft: `4px solid ${tieneAcceso ? simulacro.color : '#9ca3af'}`,
               borderRadius: '12px',
               padding: viewMode === 'list' ? '1.5rem' : '2rem',
               display: viewMode === 'list' ? 'flex' : 'block',
               alignItems: viewMode === 'list' ? 'center' : 'initial',
               gap: viewMode === 'list' ? '1.5rem' : '0',
               transition: 'all 0.3s ease',
-              cursor: 'pointer'
+              cursor: 'pointer',
+              opacity: tieneAcceso ? 1 : 0.7
             }}
             onMouseOver={(e) => {
-              e.currentTarget.style.transform = 'translateY(-2px)';
-              e.currentTarget.style.boxShadow = `0 8px 25px ${simulacro.color}20`;
+              if (tieneAcceso) {
+                e.currentTarget.style.transform = 'translateY(-2px)';
+                e.currentTarget.style.boxShadow = `0 8px 25px ${simulacro.color}20`;
+              }
             }}
             onMouseOut={(e) => {
-              e.currentTarget.style.transform = 'translateY(0)';
-              e.currentTarget.style.boxShadow = 'none';
+              if (tieneAcceso) {
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = 'none';
+              }
             }}>
+              
+              {/* Overlay de servicio bloqueado */}
+              {!tieneAcceso && (
+                <div style={{
+                  position: 'absolute',
+                  top: 0,
+                  right: 0,
+                  background: 'linear-gradient(135deg, rgba(239, 68, 68, 0.9), rgba(220, 38, 38, 0.9))',
+                  color: 'white',
+                  padding: '0.5rem 1rem',
+                  borderRadius: '0 12px 0 12px',
+                  fontSize: '0.75rem',
+                  fontWeight: '700',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.375rem',
+                  zIndex: 1,
+                  boxShadow: '0 4px 12px rgba(239, 68, 68, 0.3)'
+                }}>
+                  🔒 Sin Acceso
+                </div>
+              )}
               
               {viewMode === 'grid' ? (
                 <>
                   {/* Vista en cuadrícula */}
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
                     <div>
-                      <h3 style={{ 
-                        margin: 0, 
-                        fontSize: '1.25rem', 
-                        fontWeight: 'bold', 
-                        color: safeTheme.colors.current.text.primary,
-                        marginBottom: '0.5rem'
-                      }}>
-                        {simulacro.nombre}
-                      </h3>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                        <h3 style={{ 
+                          margin: 0, 
+                          fontSize: '1.25rem', 
+                          fontWeight: 'bold', 
+                          color: safeTheme.colors.current.text.primary
+                        }}>
+                          {simulacro.nombre}
+                        </h3>
+                        <span style={{
+                          padding: '0.125rem 0.5rem',
+                          fontSize: '0.625rem',
+                          background: '#6366f120',
+                          color: '#6366f1',
+                          borderRadius: '6px',
+                          fontWeight: '700',
+                          textTransform: 'uppercase' as const,
+                          letterSpacing: '0.5px'
+                        }}>
+                          {simulacro.servicio}
+                        </span>
+                      </div>
                       <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.75rem', flexWrap: 'wrap' as const }}>
                         {simulacro.tags.map(tag => (
                           <span key={tag} style={{
@@ -738,12 +837,6 @@ const StudentDashboard = () => {
                       <Clock size={16} style={{ color: safeTheme.colors.current.text.secondary }} />
                       <span style={{ fontSize: '0.875rem', color: safeTheme.colors.current.text.secondary }}>
                         {simulacro.tiempo}
-                      </span>
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                      <TrendingUp size={16} style={{ color: safeTheme.colors.current.text.secondary }} />
-                      <span style={{ fontSize: '0.875rem', color: safeTheme.colors.current.text.secondary }}>
-                        {simulacro.dificultad}
                       </span>
                     </div>
                     {simulacro.ultimoIntento && (
@@ -891,7 +984,8 @@ const StudentDashboard = () => {
                 </>
               )}
             </div>
-          ))}
+            );
+          })}
         </div>
 
         {sortedSimulacros.length === 0 && (
@@ -954,6 +1048,171 @@ const StudentDashboard = () => {
                   }
                 }}
               />
+            </div>
+          </div>
+        )}
+
+        {/* Modal de Acceso Denegado */}
+        {showAccessDeniedModal && deniedServiceInfo && (
+          <div style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0, 0, 0, 0.75)',
+            zIndex: 10000,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '2rem'
+          }}>
+            <div style={{
+              background: isDarkMode ? '#1f2937' : '#ffffff',
+              borderRadius: '16px',
+              maxWidth: '500px',
+              width: '100%',
+              padding: '2rem',
+              boxShadow: '0 20px 60px rgba(0, 0, 0, 0.5)',
+              border: `2px solid ${isDarkMode ? '#374151' : '#e5e7eb'}`
+            }}>
+              {/* Header */}
+              <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
+                <div style={{ 
+                  fontSize: '4rem', 
+                  marginBottom: '1rem',
+                  filter: 'grayscale(100%)'
+                }}>
+                  🔒
+                </div>
+                <h2 style={{ 
+                  margin: 0, 
+                  fontSize: '1.5rem', 
+                  fontWeight: 'bold',
+                  color: isDarkMode ? '#f3f4f6' : '#1f2937',
+                  marginBottom: '0.5rem'
+                }}>
+                  Acceso Restringido
+                </h2>
+                <p style={{ 
+                  margin: 0, 
+                  fontSize: '0.875rem',
+                  color: isDarkMode ? '#9ca3af' : '#6b7280'
+                }}>
+                  No tienes acceso a este servicio
+                </p>
+              </div>
+
+              {/* Content */}
+              <div style={{
+                background: isDarkMode ? '#111827' : '#f9fafb',
+                padding: '1.5rem',
+                borderRadius: '12px',
+                marginBottom: '1.5rem'
+              }}>
+                <div style={{ marginBottom: '1rem' }}>
+                  <div style={{ 
+                    fontSize: '0.75rem', 
+                    fontWeight: '600', 
+                    textTransform: 'uppercase',
+                    color: isDarkMode ? '#9ca3af' : '#6b7280',
+                    marginBottom: '0.25rem',
+                    letterSpacing: '0.5px'
+                  }}>
+                    {deniedServiceInfo.tipo === 'simulacro' ? 'Simulacro' : 'Curso'}
+                  </div>
+                  <div style={{ 
+                    fontSize: '1.125rem', 
+                    fontWeight: 'bold',
+                    color: isDarkMode ? '#f3f4f6' : '#1f2937'
+                  }}>
+                    {deniedServiceInfo.nombre}
+                  </div>
+                </div>
+
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.75rem',
+                  padding: '1rem',
+                  background: '#ef444420',
+                  borderLeft: '4px solid #ef4444',
+                  borderRadius: '8px'
+                }}>
+                  <span style={{ fontSize: '1.5rem' }}>⚠️</span>
+                  <div>
+                    <div style={{ 
+                      fontSize: '0.875rem', 
+                      fontWeight: '600',
+                      color: '#ef4444',
+                      marginBottom: '0.25rem'
+                    }}>
+                      Servicio No Adquirido
+                    </div>
+                    <div style={{ 
+                      fontSize: '0.875rem',
+                      color: isDarkMode ? '#d1d5db' : '#4b5563'
+                    }}>
+                      Este contenido pertenece al servicio <strong>{deniedServiceInfo.servicio}</strong>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Info */}
+              <div style={{ 
+                marginBottom: '1.5rem',
+                fontSize: '0.875rem',
+                color: isDarkMode ? '#9ca3af' : '#6b7280',
+                lineHeight: '1.6'
+              }}>
+                <p style={{ margin: '0 0 0.75rem' }}>
+                  Para acceder a este contenido necesitas adquirir el servicio <strong>{deniedServiceInfo.servicio}</strong>.
+                </p>
+                <p style={{ margin: 0 }}>
+                  Contacta con tu administrador o visita la tienda para obtener acceso.
+                </p>
+              </div>
+
+              {/* Actions */}
+              <div style={{ display: 'flex', gap: '0.75rem' }}>
+                <button
+                  onClick={() => {
+                    setShowAccessDeniedModal(false);
+                    setDeniedServiceInfo(null);
+                  }}
+                  style={{
+                    flex: 1,
+                    padding: '0.75rem',
+                    border: `1px solid ${isDarkMode ? '#374151' : '#d1d5db'}`,
+                    borderRadius: '8px',
+                    background: 'transparent',
+                    color: isDarkMode ? '#f3f4f6' : '#1f2937',
+                    fontWeight: '600',
+                    cursor: 'pointer',
+                    fontSize: '0.875rem'
+                  }}
+                >
+                  Cerrar
+                </button>
+                <button
+                  onClick={() => {
+                    setShowAccessDeniedModal(false);
+                    setDeniedServiceInfo(null);
+                    alert('Próximamente: Tienda de servicios\n\nPor ahora, contacta con tu administrador para adquirir este servicio.');
+                  }}
+                  style={{
+                    flex: 1,
+                    padding: '0.75rem',
+                    border: 'none',
+                    borderRadius: '8px',
+                    background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
+                    color: 'white',
+                    fontWeight: '600',
+                    cursor: 'pointer',
+                    fontSize: '0.875rem'
+                  }}
+                >
+                  Ver Servicios
+                </button>
+              </div>
             </div>
           </div>
         )}
@@ -1893,6 +2152,29 @@ const StudentDashboard = () => {
     </div>
   );
 
+  const renderTienda = () => {
+    const handleAdquirir = (servicioId: string) => {
+      // Agregar servicio a serviciosAdquiridos
+      setServiciosAdquiridos(prev => [...prev, servicioId]);
+      
+      // Mostrar notificación
+      alert(`¡Felicitaciones! Has adquirido el servicio: ${servicioId.toUpperCase()}\n\nAhora tienes acceso a todos los simulacros y cursos de este servicio.`);
+      
+      // Volver a Dashboard
+      setTimeout(() => {
+        setCurrentPage('dashboard');
+      }, 500);
+    };
+
+    return (
+      <ServicesStore 
+        serviciosAdquiridos={serviciosAdquiridos}
+        isDarkMode={isDarkMode}
+        onAdquirir={handleAdquirir}
+      />
+    );
+  };
+
   const renderDashboard = () => (
     <div style={{ padding: isMobile ? '1rem' : '2rem', maxWidth: '1400px', margin: '0 auto' }}>
       {/* Hero Section - Bienvenida Publicitaria */}
@@ -2497,6 +2779,8 @@ const StudentDashboard = () => {
         return renderMensajes();
       case 'perfil':
         return renderPerfil();
+      case 'tienda':
+        return renderTienda();
       default:
         return renderDashboard();
     }
@@ -2515,6 +2799,7 @@ const StudentDashboard = () => {
         estudiantes: 245,
         precio: 299000,
         categoria: 'Matemáticas',
+        servicio: 'ICFES',
         tags: ['Certificado', 'Intermedio', 'Popular'],
         color: '#3b82f6',
         fecha: '2025-09-01'
@@ -2530,6 +2815,7 @@ const StudentDashboard = () => {
         estudiantes: 189,
         precio: 349000,
         categoria: 'Matemáticas',
+        servicio: 'Saber Pro',
         tags: ['Avanzado', 'Certificado'],
         color: '#3b82f6',
         fecha: '2025-09-15'
@@ -2545,6 +2831,7 @@ const StudentDashboard = () => {
         estudiantes: 312,
         precio: 199000,
         categoria: 'Matemáticas',
+        servicio: 'ICFES',
         tags: ['Básico', 'Popular', 'Nuevo'],
         color: '#3b82f6',
         fecha: '2025-08-30'
@@ -2560,6 +2847,7 @@ const StudentDashboard = () => {
         estudiantes: 198,
         precio: 399000,
         categoria: 'Física',
+        servicio: 'Admisiones',
         tags: ['Intermedio', 'Certificado'],
         color: '#10b981',
         fecha: '2025-09-10'
@@ -2575,6 +2863,7 @@ const StudentDashboard = () => {
         estudiantes: 156,
         precio: 449000,
         categoria: 'Física',
+        servicio: 'Saber Pro',
         tags: ['Avanzado', 'Premium'],
         color: '#10b981',
         fecha: '2025-09-20'
@@ -2590,6 +2879,7 @@ const StudentDashboard = () => {
         estudiantes: 423,
         precio: 249000,
         categoria: 'Programación',
+        servicio: 'Cursos Especializados',
         tags: ['Básico', 'Popular', 'Gratuito'],
         color: '#8b5cf6',
         fecha: '2025-08-28'
@@ -2605,6 +2895,7 @@ const StudentDashboard = () => {
         estudiantes: 367,
         precio: 329000,
         categoria: 'Programación',
+        servicio: 'Corporativo',
         tags: ['Intermedio', 'Nuevo', 'Premium'],
         color: '#8b5cf6',
         fecha: '2025-09-05'
@@ -2672,27 +2963,57 @@ const StudentDashboard = () => {
             : '1fr',
           gap: '1.5rem' 
         }}>
-          {sortedCursos.map((curso) => (
+          {sortedCursos.map((curso) => {
+            const tieneAcceso = tieneAccesoAServicio(curso.servicio);
+            return (
             <div key={curso.id} style={{
+              position: 'relative',
               background: isDarkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(255, 255, 255, 0.95)',
               border: `1px solid ${isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'}`,
-              borderLeft: `4px solid ${curso.color}`,
+              borderLeft: `4px solid ${tieneAcceso ? curso.color : '#9ca3af'}`,
               borderRadius: '12px',
               padding: viewMode === 'list' ? '1.5rem' : '2rem',
               display: viewMode === 'list' ? 'flex' : 'block',
               alignItems: viewMode === 'list' ? 'center' : 'initial',
               gap: viewMode === 'list' ? '1.5rem' : '0',
               transition: 'all 0.3s ease',
-              cursor: 'pointer'
+              cursor: 'pointer',
+              opacity: tieneAcceso ? 1 : 0.7
             }}
             onMouseOver={(e) => {
-              e.currentTarget.style.transform = 'translateY(-2px)';
-              e.currentTarget.style.boxShadow = `0 8px 25px ${curso.color}20`;
+              if (tieneAcceso) {
+                e.currentTarget.style.transform = 'translateY(-2px)';
+                e.currentTarget.style.boxShadow = `0 8px 25px ${curso.color}20`;
+              }
             }}
             onMouseOut={(e) => {
-              e.currentTarget.style.transform = 'translateY(0)';
-              e.currentTarget.style.boxShadow = 'none';
+              if (tieneAcceso) {
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = 'none';
+              }
             }}>
+              
+              {/* Overlay de servicio bloqueado */}
+              {!tieneAcceso && (
+                <div style={{
+                  position: 'absolute',
+                  top: 0,
+                  right: 0,
+                  background: 'linear-gradient(135deg, rgba(239, 68, 68, 0.9), rgba(220, 38, 38, 0.9))',
+                  color: 'white',
+                  padding: '0.5rem 1rem',
+                  borderRadius: '0 12px 0 12px',
+                  fontSize: '0.75rem',
+                  fontWeight: '700',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.375rem',
+                  zIndex: 1,
+                  boxShadow: '0 4px 12px rgba(239, 68, 68, 0.3)'
+                }}>
+                  🔒 Sin Acceso
+                </div>
+              )}
               
               {viewMode === 'grid' ? (
                 <>
@@ -2708,6 +3029,20 @@ const StudentDashboard = () => {
                       }}>
                         {curso.nombre}
                       </h3>
+                      <span style={{ 
+                        padding:'0.125rem 0.5rem', 
+                        background:'#6366f120', 
+                        color:'#6366f1', 
+                        borderRadius:4, 
+                        fontSize:'0.625rem',
+                        fontWeight: '700',
+                        textTransform: 'uppercase' as const,
+                        letterSpacing: '0.5px',
+                        display: 'inline-block',
+                        marginBottom: '0.5rem'
+                      }}>
+                        {curso.servicio}
+                      </span>
                       <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.75rem' }}>
                         {curso.tags.map(tag => (
                           <span key={tag} style={{
@@ -2780,20 +3115,34 @@ const StudentDashboard = () => {
                         Pago único
                       </span>
                     </div>
-                    <button style={{
-                      background: `linear-gradient(135deg, ${curso.color}, ${curso.color}dd)`,
-                      border: 'none',
-                      borderRadius: '8px',
-                      padding: '0.75rem 1.5rem',
-                      color: 'white',
-                      fontWeight: '600',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.5rem'
-                    }}>
-                      <BookOpen size={16} />
-                      Inscribirse
+                    <button 
+                      onClick={() => handleInscribirseCurso(curso)}
+                      disabled={!tieneAccesoAServicio(curso.servicio)}
+                      style={{
+                        background: tieneAccesoAServicio(curso.servicio) 
+                          ? `linear-gradient(135deg, ${curso.color}, ${curso.color}dd)` 
+                          : '#9ca3af',
+                        border: 'none',
+                        borderRadius: '8px',
+                        padding: '0.75rem 1.5rem',
+                        color: 'white',
+                        fontWeight: '600',
+                        cursor: tieneAccesoAServicio(curso.servicio) ? 'pointer' : 'not-allowed',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.5rem',
+                        opacity: tieneAccesoAServicio(curso.servicio) ? 1 : 0.6
+                      }}>
+                      {tieneAccesoAServicio(curso.servicio) ? (
+                        <>
+                          <BookOpen size={16} />
+                          Inscribirse
+                        </>
+                      ) : (
+                        <>
+                          🔒 Servicio No Adquirido
+                        </>
+                      )}
                     </button>
                   </div>
                 </>
@@ -2810,6 +3159,18 @@ const StudentDashboard = () => {
                       }}>
                         {curso.nombre}
                       </h3>
+                      <span style={{ 
+                        padding:'0.125rem 0.5rem', 
+                        background:'#6366f120', 
+                        color:'#6366f1', 
+                        borderRadius:4, 
+                        fontSize:'0.625rem',
+                        fontWeight: '700',
+                        textTransform: 'uppercase' as const,
+                        letterSpacing: '0.5px'
+                      }}>
+                        {curso.servicio}
+                      </span>
                       <div style={{ display: 'flex', gap: '0.5rem' }}>
                         {curso.tags.slice(0, 2).map(tag => (
                           <span key={tag} style={{
@@ -2874,27 +3235,40 @@ const StudentDashboard = () => {
                         Pago único
                       </div>
                     </div>
-                    <button style={{
-                      background: `linear-gradient(135deg, ${curso.color}, ${curso.color}dd)`,
-                      border: 'none',
-                      borderRadius: '8px',
-                      padding: '0.75rem 1.5rem',
-                      color: 'white',
-                      fontWeight: '600',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.5rem',
-                      whiteSpace: 'nowrap' as const
-                    }}>
-                      <BookOpen size={16} />
-                      Inscribirse
+                    <button 
+                      onClick={() => handleInscribirseCurso(curso)}
+                      disabled={!tieneAccesoAServicio(curso.servicio)}
+                      style={{
+                        background: tieneAccesoAServicio(curso.servicio)
+                          ? `linear-gradient(135deg, ${curso.color}, ${curso.color}dd)`
+                          : '#9ca3af',
+                        border: 'none',
+                        borderRadius: '8px',
+                        padding: '0.75rem 1.5rem',
+                        color: 'white',
+                        fontWeight: '600',
+                        cursor: tieneAccesoAServicio(curso.servicio) ? 'pointer' : 'not-allowed',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.5rem',
+                        whiteSpace: 'nowrap' as const,
+                        opacity: tieneAccesoAServicio(curso.servicio) ? 1 : 0.6
+                      }}>
+                      {tieneAccesoAServicio(curso.servicio) ? (
+                        <>
+                          <BookOpen size={16} />
+                          Inscribirse
+                        </>
+                      ) : (
+                        <>🔒 Bloqueado</>
+                      )}
                     </button>
                   </div>
                 </>
               )}
             </div>
-          ))}
+            );
+          })}
         </div>
 
         {sortedCursos.length === 0 && (
@@ -2923,6 +3297,7 @@ const StudentDashboard = () => {
         tiempoEstudio: '8h/sem', 
         proximaClase: '2025-08-30',
         categoria: 'En Progreso',
+        servicio: 'ICFES',
         tags: ['Favorito', 'En Curso'],
         fecha: '2025-01-15'
       },
@@ -2936,6 +3311,7 @@ const StudentDashboard = () => {
         tiempoEstudio: '6h/sem', 
         proximaClase: '2025-08-29',
         categoria: 'En Progreso',
+        servicio: 'Saber Pro',
         tags: ['En Curso'],
         fecha: '2025-02-01'
       },
@@ -2949,6 +3325,7 @@ const StudentDashboard = () => {
         tiempoEstudio: '5h/sem', 
         proximaClase: null,
         categoria: 'Completados',
+        servicio: 'Cursos Especializados',
         tags: ['Completado', 'Certificado'],
         fecha: '2024-12-10'
       },
@@ -2962,6 +3339,7 @@ const StudentDashboard = () => {
         tiempoEstudio: '7h/sem', 
         proximaClase: '2025-09-01',
         categoria: 'En Progreso',
+        servicio: 'Admisiones',
         tags: ['En Curso', 'Urgente'],
         fecha: '2025-03-01'
       },
@@ -2975,6 +3353,7 @@ const StudentDashboard = () => {
         tiempoEstudio: '4h/sem', 
         proximaClase: '2025-08-28',
         categoria: 'En Progreso',
+        servicio: 'Corporativo',
         tags: ['En Curso', 'Favorito'],
         fecha: '2025-01-20'
       }
@@ -3074,27 +3453,57 @@ const StudentDashboard = () => {
             : '1fr',
           gap: '1.5rem' 
         }}>
-          {sortedCursos.map((curso) => (
+          {sortedCursos.map((curso) => {
+            const tieneAcceso = tieneAccesoAServicio(curso.servicio);
+            return (
             <div key={curso.id} style={{
+              position: 'relative',
               background: isDarkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(255, 255, 255, 0.9)',
               border: `1px solid ${isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'}`,
-              borderLeft: `4px solid ${curso.color}`,
+              borderLeft: `4px solid ${tieneAcceso ? curso.color : '#9ca3af'}`,
               borderRadius: '12px',
               padding: viewMode === 'list' ? '1.5rem' : '2rem',
               display: viewMode === 'list' ? 'flex' : 'block',
               alignItems: viewMode === 'list' ? 'center' : 'initial',
               gap: viewMode === 'list' ? '1.5rem' : '0',
               transition: 'all 0.3s ease',
-              cursor: 'pointer'
+              cursor: 'pointer',
+              opacity: tieneAcceso ? 1 : 0.7
             }}
             onMouseOver={(e) => {
-              e.currentTarget.style.transform = 'translateY(-2px)';
-              e.currentTarget.style.boxShadow = `0 8px 25px ${curso.color}20`;
+              if (tieneAcceso) {
+                e.currentTarget.style.transform = 'translateY(-2px)';
+                e.currentTarget.style.boxShadow = `0 8px 25px ${curso.color}20`;
+              }
             }}
             onMouseOut={(e) => {
-              e.currentTarget.style.transform = 'translateY(0)';
-              e.currentTarget.style.boxShadow = 'none';
+              if (tieneAcceso) {
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = 'none';
+              }
             }}>
+              
+              {/* Overlay de servicio bloqueado */}
+              {!tieneAcceso && (
+                <div style={{
+                  position: 'absolute',
+                  top: 0,
+                  right: 0,
+                  background: 'linear-gradient(135deg, rgba(239, 68, 68, 0.9), rgba(220, 38, 38, 0.9))',
+                  color: 'white',
+                  padding: '0.5rem 1rem',
+                  borderRadius: '0 12px 0 12px',
+                  fontSize: '0.75rem',
+                  fontWeight: '700',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.375rem',
+                  zIndex: 1,
+                  boxShadow: '0 4px 12px rgba(239, 68, 68, 0.3)'
+                }}>
+                  🔒 Sin Acceso
+                </div>
+              )}
               
               {viewMode === 'grid' ? (
                 <>
@@ -3110,6 +3519,20 @@ const StudentDashboard = () => {
                       }}>
                         {curso.nombre}
                       </h3>
+                      <span style={{ 
+                        padding:'0.125rem 0.5rem', 
+                        background:'#6366f120', 
+                        color:'#6366f1', 
+                        borderRadius:4, 
+                        fontSize:'0.625rem',
+                        fontWeight: '700',
+                        textTransform: 'uppercase' as const,
+                        letterSpacing: '0.5px',
+                        display: 'inline-block',
+                        marginBottom: '0.5rem'
+                      }}>
+                        {curso.servicio}
+                      </span>
                       <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.75rem' }}>
                         {curso.tags.map(tag => (
                           <span key={tag} style={{
@@ -3190,22 +3613,34 @@ const StudentDashboard = () => {
                     </div>
                   )}
                   
-                  <button style={{
-                    width: '100%',
-                    background: `linear-gradient(135deg, ${curso.color}, ${curso.color}dd)`,
-                    border: 'none',
-                    borderRadius: '8px',
-                    padding: '0.75rem',
-                    color: 'white',
-                    fontWeight: '600',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '0.5rem'
-                  }}>
-                    <Play size={16} />
-                    {curso.progreso === 100 ? 'Revisar Curso' : 'Continuar'}
+                  <button 
+                    onClick={() => handleAccederCurso(curso)}
+                    disabled={!tieneAccesoAServicio(curso.servicio)}
+                    style={{
+                      width: '100%',
+                      background: tieneAccesoAServicio(curso.servicio)
+                        ? `linear-gradient(135deg, ${curso.color}, ${curso.color}dd)`
+                        : '#9ca3af',
+                      border: 'none',
+                      borderRadius: '8px',
+                      padding: '0.75rem',
+                      color: 'white',
+                      fontWeight: '600',
+                      cursor: tieneAccesoAServicio(curso.servicio) ? 'pointer' : 'not-allowed',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '0.5rem',
+                      opacity: tieneAccesoAServicio(curso.servicio) ? 1 : 0.6
+                    }}>
+                    {tieneAccesoAServicio(curso.servicio) ? (
+                      <>
+                        <Play size={16} />
+                        {curso.progreso === 100 ? 'Revisar Curso' : 'Continuar'}
+                      </>
+                    ) : (
+                      <>🔒 Acceso Denegado</>
+                    )}
                   </button>
                 </>
               ) : (
@@ -3221,6 +3656,18 @@ const StudentDashboard = () => {
                       }}>
                         {curso.nombre}
                       </h3>
+                      <span style={{ 
+                        padding:'0.125rem 0.5rem', 
+                        background:'#6366f120', 
+                        color:'#6366f1', 
+                        borderRadius:4, 
+                        fontSize:'0.625rem',
+                        fontWeight: '700',
+                        textTransform: 'uppercase' as const,
+                        letterSpacing: '0.5px'
+                      }}>
+                        {curso.servicio}
+                      </span>
                       <div style={{ display: 'flex', gap: '0.5rem' }}>
                         {curso.tags.slice(0, 2).map(tag => (
                           <span key={tag} style={{
@@ -3266,26 +3713,39 @@ const StudentDashboard = () => {
                     </div>
                   </div>
                   
-                  <button style={{
-                    background: `linear-gradient(135deg, ${curso.color}, ${curso.color}dd)`,
-                    border: 'none',
-                    borderRadius: '8px',
-                    padding: '0.75rem 1.5rem',
-                    color: 'white',
-                    fontWeight: '600',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.5rem',
-                    whiteSpace: 'nowrap' as const
-                  }}>
-                    <Play size={16} />
-                    {curso.progreso === 100 ? 'Revisar' : 'Continuar'}
+                  <button 
+                    onClick={() => handleAccederCurso(curso)}
+                    disabled={!tieneAccesoAServicio(curso.servicio)}
+                    style={{
+                      background: tieneAccesoAServicio(curso.servicio)
+                        ? `linear-gradient(135deg, ${curso.color}, ${curso.color}dd)`
+                        : '#9ca3af',
+                      border: 'none',
+                      borderRadius: '8px',
+                      padding: '0.75rem 1.5rem',
+                      color: 'white',
+                      fontWeight: '600',
+                      cursor: tieneAccesoAServicio(curso.servicio) ? 'pointer' : 'not-allowed',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.5rem',
+                      whiteSpace: 'nowrap' as const,
+                      opacity: tieneAccesoAServicio(curso.servicio) ? 1 : 0.6
+                    }}>
+                    {tieneAccesoAServicio(curso.servicio) ? (
+                      <>
+                        <Play size={16} />
+                        {curso.progreso === 100 ? 'Revisar' : 'Continuar'}
+                      </>
+                    ) : (
+                      <>🔒 Bloqueado</>
+                    )}
                   </button>
                 </>
               )}
             </div>
-          ))}
+            );
+          })}
         </div>
 
         {sortedCursos.length === 0 && (

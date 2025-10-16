@@ -3,8 +3,8 @@
 import React from 'react';
 import { useUserRole } from '@/hooks/useUserRole';
 import AdminPanel from '@/components/admin/AdminPanel';
-import TeacherCourseManager from '@/components/teacher/TeacherCourseManager';
-import TeacherChatCenter from '@/components/teacher/TeacherChatCenter';
+import AdminCourseManager from '@/components/admin/AdminCourseManager';
+import AdminChatCenter from '@/components/admin/AdminChatCenter';
 import { BookOpen, MessageCircle, Users, Settings, Shield } from 'lucide-react';
 
 export default function DashboardMain() {
@@ -204,8 +204,8 @@ export default function DashboardMain() {
 
         {/* Main Content */}
         <div style={{ flex: 1, background: '#f9fafb' }}>
-          {activeSection === 'courses' && <TeacherCourseManager />}
-          {activeSection === 'chat' && <TeacherChatCenter teacherId={userProfile?.id || ''} />}
+          {activeSection === 'courses' && <AdminCourseManager />}
+          {activeSection === 'chat' && <AdminChatCenter teacherId={userProfile?.id || ''} />}
         </div>
       </div>
     );

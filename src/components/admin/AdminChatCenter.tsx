@@ -15,13 +15,13 @@ interface ChatThreadMeta {
 }
 
 /**
- * Vista de chats para el profesor:
+ * Vista de chats para el administrador:
  * - Canal general
- * - Lista de estudiantes asignados al profesor para chat directo
+ * - Lista de estudiantes asignados al admin para chat directo
  * - Solo muestra chats con estudiantes que tiene asignados
- * Requiere tabla messages con RLS que valide teacher_id en students
+ * Requiere tabla messages con RLS que valide admin_id en students
  */
-export default function TeacherChatCenter({ teacherId }: { teacherId: string }) {
+export default function AdminChatCenter({ teacherId }: { teacherId: string }) {
   const supabase = createClient();
   const [threads, setThreads] = useState<ChatThreadMeta[]>([]);
   const [loading, setLoading] = useState(true);
@@ -51,7 +51,7 @@ export default function TeacherChatCenter({ teacherId }: { teacherId: string }) 
     const students = (studentsData || []).filter(s => s.user_id);
     setAssignedStudents(students);
     
-    // Query mensajes de canales donde participa el profesor y general
+    // Query mensajes de canales donde participa el admin y general
     const { data, error } = await supabase
       .from('messages')
       .select('channel, content, created_at, sender_id')

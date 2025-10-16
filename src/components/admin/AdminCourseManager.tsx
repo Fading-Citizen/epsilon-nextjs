@@ -26,7 +26,7 @@ interface Student {
   status: 'active' | 'completed' | 'dropped';
 }
 
-export default function TeacherCourseManager() {
+export default function AdminCourseManager() {
   const supabase = createClient();
   const [courses, setCourses] = useState<Course[]>([]);
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);

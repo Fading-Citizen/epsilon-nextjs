@@ -22,6 +22,7 @@ interface Course {
   title: string;
   description: string;
   category: string;
+  servicio: string;
   status: 'active' | 'draft' | 'archived';
   students: number;
   lessons: number;
@@ -56,6 +57,7 @@ const CourseManager: React.FC<CourseManagerProps> = ({
       title: 'Cálculo Diferencial',
       description: 'Curso completo de cálculo diferencial para estudiantes de ingeniería',
       category: 'matematicas',
+      servicio: 'ICFES',
       status: 'active',
       students: 45,
       lessons: 24,
@@ -71,6 +73,7 @@ const CourseManager: React.FC<CourseManagerProps> = ({
       title: 'Física Cuántica',
       description: 'Introducción a los principios fundamentales de la física cuántica',
       category: 'fisica',
+      servicio: 'Saber Pro',
       status: 'active',
       students: 32,
       lessons: 18,
@@ -86,6 +89,7 @@ const CourseManager: React.FC<CourseManagerProps> = ({
       title: 'Programación Python',
       description: 'Curso básico de programación en Python desde cero',
       category: 'programacion',
+      servicio: 'Cursos Especializados',
       status: 'draft',
       students: 0,
       lessons: 15,
@@ -101,6 +105,7 @@ const CourseManager: React.FC<CourseManagerProps> = ({
       title: 'Química Orgánica',
       description: 'Fundamentos de química orgánica aplicada',
       category: 'quimica',
+      servicio: 'Admisiones',
       status: 'active',
       students: 28,
       lessons: 20,
@@ -116,6 +121,7 @@ const CourseManager: React.FC<CourseManagerProps> = ({
       title: 'Álgebra Linear',
       description: 'Conceptos avanzados de álgebra linear y matrices',
       category: 'matematicas',
+      servicio: 'Corporativo',
       status: 'archived',
       students: 67,
       lessons: 22,
@@ -225,7 +231,23 @@ const CourseManager: React.FC<CourseManagerProps> = ({
       
       <div className={styles.courseContent}>
         <div className={styles.courseHeader}>
-          <h3>{course.title}</h3>
+          <div>
+            <h3>{course.title}</h3>
+            <span style={{ 
+              padding:'0.125rem 0.5rem', 
+              background:'#6366f120', 
+              color:'#6366f1', 
+              borderRadius:4, 
+              fontSize:'0.625rem',
+              fontWeight: '700',
+              textTransform: 'uppercase' as const,
+              letterSpacing: '0.5px',
+              display: 'inline-block',
+              marginTop: '0.25rem'
+            }}>
+              {course.servicio}
+            </span>
+          </div>
           <div className={styles.courseActions}>
             <button className={styles.actionIcon} onClick={() => console.log('Ver curso')}>
               <Eye size={16} />
@@ -290,6 +312,19 @@ const CourseManager: React.FC<CourseManagerProps> = ({
       <div className={styles.courseInfo}>
         <div className={styles.courseTitleSection}>
           <h3>{course.title}</h3>
+          <span style={{ 
+            padding:'0.125rem 0.5rem', 
+            background:'#6366f120', 
+            color:'#6366f1', 
+            borderRadius:4, 
+            fontSize:'0.625rem',
+            fontWeight: '700',
+            textTransform: 'uppercase' as const,
+            letterSpacing: '0.5px',
+            marginLeft: '0.5rem'
+          }}>
+            {course.servicio}
+          </span>
           <span className={styles.courseCategorySmall}>{categoryText(course.category)}</span>
         </div>
         <p className={styles.courseDescriptionSmall}>{course.description}</p>

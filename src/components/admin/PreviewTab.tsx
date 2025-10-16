@@ -103,8 +103,8 @@ export const PreviewTab: React.FC<PreviewTabProps> = ({
       <div className={styles.settingsSection}>
         <h3>Configuración</h3>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1rem' }}>
+          <ConfigItem label="Servicio/Producto" value={settings.servicio} />
           <ConfigItem label="Categoría" value={settings.category} />
-          <ConfigItem label="Nivel de Dificultad" value={settings.difficultyLevel} />
           <ConfigItem label="Intentos Permitidos" value={`${settings.maxAttempts} intento${settings.maxAttempts > 1 ? 's' : ''}`} />
           <ConfigItem 
             label="Tipo de Acceso" 

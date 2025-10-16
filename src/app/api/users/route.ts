@@ -23,8 +23,8 @@ export async function GET() {
     },
     {
       id: '2',
-      email: 'demo@teacher.com',
-      role: 'teacher',
+      email: 'demo@admin.com',
+      role: 'admin',
       created_at: new Date().toISOString(),
       status: 'active'
     },

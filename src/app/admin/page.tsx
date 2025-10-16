@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
-import AdminPanel from '@/components/admin/AdminPanel'
+import AdminDashboard from '@/components/admin/AdminDashboard_main'
 
 export default async function AdminPage() {
   const supabase = await createClient()
@@ -10,5 +10,5 @@ export default async function AdminPage() {
     redirect('/login')
   }
 
-  return <AdminPanel />
+  return <AdminDashboard user={user} />
 }

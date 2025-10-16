@@ -28,7 +28,10 @@ import {
   Moon,
   LogOut,
   Video,
-  Shield
+  Shield,
+  Package,
+  UserPlus,
+  RefreshCw
 } from 'lucide-react';
 import { useAuth } from '../../lib/auth/AuthContext';
 import { useRouter } from 'next/navigation';
@@ -41,13 +44,15 @@ import SimulacroBuilder from './SimulacroBuilder';
 import LiveClassesManager from './LiveClassesManager';
 import StudentsManager from './StudentsManager';
 import GroupManager from './GroupManager';
-import TeacherChatCenter from './TeacherChatCenter';
+import AdminChatCenter from './AdminChatCenter';
+import ServicesManager from './ServicesManager';
+import UserManagement from './UserManagement';
 
-interface TeacherDashboardProps {
+interface AdminDashboardProps {
   user: SupabaseUser;
 }
 
-const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ user: currentUser }) => {
+const AdminDashboard: React.FC<AdminDashboardProps> = ({ user: currentUser }) => {
   const [activeSection, setActiveSection] = useState('overview');
   const [searchTerm, setSearchTerm] = useState('');
   const { isDarkMode, toggleTheme, theme } = useTheme();
@@ -82,6 +87,8 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ user: currentUser }
     { id: 'simulacros', label: 'Simulacros (Práctica)', icon: Award },
     { id: 'students', label: 'Estudiantes', icon: Users },
     { id: 'groups', label: 'Grupos', icon: Shield },
+    { id: 'teachers', label: 'Administradores', icon: UserPlus },
+    { id: 'services', label: 'Servicios', icon: Package },
     { id: 'messages', label: 'Mensajes', icon: MessageSquare },
     { id: 'reports', label: 'Reportes', icon: TrendingUp },
     { id: 'profile', label: 'Perfil', icon: User }
@@ -847,8 +854,13 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ user: currentUser }
       
       {/* Lista de simulacros - placeholder */}
       <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(300px, 1fr))', gap:'1.5rem' }}>
-        {[1, 2, 3, 4].map(i => (
-          <div key={i} style={{
+        {[
+          { id: 1, nombre: 'Simulacro ICFES - Matemáticas', servicio: 'ICFES', nivel: 'MUESTRA', minutos: 90, preguntas: 45, intentos: 234 },
+          { id: 2, nombre: 'Simulacro Saber Pro - Razonamiento', servicio: 'Saber Pro', nivel: 'PREMIUM', minutos: 120, preguntas: 60, intentos: 156 },
+          { id: 3, nombre: 'Simulacro UNAL - Cálculo', servicio: 'Admisiones', nivel: 'PREMIUM', minutos: 100, preguntas: 50, intentos: 89 },
+          { id: 4, nombre: 'Simulacro Corporativo - Liderazgo', servicio: 'Corporativo', nivel: 'PREMIUM', minutos: 45, preguntas: 30, intentos: 67 }
+        ].map(sim => (
+          <div key={sim.id} style={{
             background: theme.colors.current.background.secondary,
             border:`1px solid ${theme.colors.current.border}`,
             borderRadius:12,
@@ -856,23 +868,39 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ user: currentUser }
             cursor:'pointer',
             transition:'all 0.2s'
           }}>
-            <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:'1rem' }}>
-              <h3 style={{ margin:0, color: theme.colors.current.text.primary }}>Simulacro UNAM {i}</h3>
-              <span style={{ padding:'0.25rem 0.75rem', background:'#10b981', color:'white', borderRadius:6, fontSize:'0.75rem' }}>
-                {i === 1 ? 'MUESTRA' : 'PREMIUM'}
+            <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:'0.5rem' }}>
+              <div style={{ flex: 1 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
+                  <h3 style={{ margin:0, color: theme.colors.current.text.primary, fontSize: '1rem' }}>{sim.nombre}</h3>
+                </div>
+                <span style={{ 
+                  padding:'0.125rem 0.5rem', 
+                  background:'#6366f120', 
+                  color:'#6366f1', 
+                  borderRadius:4, 
+                  fontSize:'0.625rem',
+                  fontWeight: '700',
+                  textTransform: 'uppercase' as const,
+                  letterSpacing: '0.5px'
+                }}>
+                  {sim.servicio}
+                </span>
+              </div>
+              <span style={{ padding:'0.25rem 0.75rem', background: sim.nivel === 'MUESTRA' ? '#10b981' : '#f59e0b', color:'white', borderRadius:6, fontSize:'0.75rem', fontWeight: '600' }}>
+                {sim.nivel}
               </span>
             </div>
-            <p style={{ margin:'0 0 1rem', fontSize:'0.875rem', color: theme.colors.current.text.secondary }}>
+            <p style={{ margin:'0.75rem 0 1rem', fontSize:'0.875rem', color: theme.colors.current.text.secondary }}>
               Preparación para examen de admisión
             </p>
             <div style={{ display:'flex', gap:'1rem', fontSize:'0.875rem', color: theme.colors.current.text.secondary }}>
-              <span>⏱️ 120 min</span>
-              <span>📝 120 preguntas</span>
-              <span>👥 234 intentos</span>
+              <span>⏱️ {sim.minutos} min</span>
+              <span>📝 {sim.preguntas} preguntas</span>
+              <span>👥 {sim.intentos} intentos</span>
             </div>
             <div style={{ marginTop:'1rem', display:'flex', gap:'0.5rem' }}>
               <button 
-                onClick={() => { setEditingSimulacro({ id: i }); setShowSimulacroBuilder(true); }}
+                onClick={() => { setEditingSimulacro({ id: sim.id }); setShowSimulacroBuilder(true); }}
                 style={{ flex:1, padding:'0.5rem', background:'#3b82f6', color:'white', border:'none', borderRadius:6, cursor:'pointer' }}>
                 Editar
               </button>
@@ -914,6 +942,10 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ user: currentUser }
         return <StudentsManager onNavigateToGroups={() => setActiveSection('groups')} />;
       case 'groups':
         return <GroupManager onNavigateToStudents={() => setActiveSection('students')} />;
+      case 'teachers':
+        return <UserManagement />;
+      case 'services':
+        return <ServicesManager />;
       case 'reports':
         return (
           <div>
@@ -1096,7 +1128,7 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ user: currentUser }
           </div>
         );
       case 'messages':
-        return <TeacherChatCenter teacherId={currentUser.id} />;
+        return <AdminChatCenter teacherId={currentUser.id} />;
       case 'profile':
         return (
           <div>
@@ -1487,4 +1519,4 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ user: currentUser }
   );
 };
 
-export default TeacherDashboard;
+export default AdminDashboard;

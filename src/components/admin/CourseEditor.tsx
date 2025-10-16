@@ -2,11 +2,12 @@
 "use client";
 
 import React, { useState } from 'react';
-import { ArrowLeft, Save, Plus, Trash2, Edit, Upload, FileText, File, Video } from 'lucide-react';
+import { ArrowLeft, Save, Plus, Trash2, Edit, Upload, FileText, File, Video, X } from 'lucide-react';
 import styles from './CourseEditor.module.css';
 
+interface Servicio { id: string; nombre: string; icono: string; descripcion: string; color: string; activo: boolean; createdAt: Date; }
 interface Lesson { id:string; title:string; type:'video'|'text'|'quiz'|'assignment'; content:string; duration?:number; order:number; }
-interface Course { id?:string; title:string; description:string; category:string; status:'active'|'draft'|'archived'; image:string; lessons:Lesson[]; objectives:string[]; requirements:string[]; tags:string[]; price:number; duration:number; }
+interface Course { id?:string; title:string; description:string; category:string; servicio:string; status:'active'|'draft'|'archived'; image:string; lessons:Lesson[]; objectives:string[]; requirements:string[]; tags:string[]; price:number; duration:number; }
 interface CourseEditorProps { course?:Course; onSave:(c:Course)=>void; onCancel:()=>void; }
 
 const categories=[
@@ -24,6 +25,7 @@ const normalizeCourse = (c?: Course): Course => {
     title: '',
     description: '',
     category: '',
+    servicio: 'ICFES',
     status: 'draft',
     image: '',
     lessons: [],
@@ -50,6 +52,57 @@ const CourseEditor:React.FC<CourseEditorProps>=({course,onSave,onCancel})=>{
   const [editingLesson,setEditingLesson]=useState<Lesson|null>(null);
   const [formData,setFormData]=useState<Course>(normalizeCourse(course));
   const [newTag,setNewTag]=useState('');
+  const [showNewServiceModal, setShowNewServiceModal] = useState(false);
+  
+  // Lista de servicios disponibles - en producción vendría de la BD
+  const [serviciosDisponibles, setServiciosDisponibles] = useState<Servicio[]>([
+    { id: '1', nombre: 'ICFES', icono: '📚', descripcion: 'Preparación para examen de estado', color: '#3b82f6', activo: true, createdAt: new Date() },
+    { id: '2', nombre: 'Saber Pro', icono: '🎓', descripcion: 'Pruebas universitarias', color: '#10b981', activo: true, createdAt: new Date() },
+    { id: '3', nombre: 'Admisiones', icono: '🏛️', descripcion: 'Ingreso a universidades', color: '#f59e0b', activo: true, createdAt: new Date() },
+    { id: '4', nombre: 'Corporativo', icono: '💼', descripcion: 'Capacitación empresarial', color: '#8b5cf6', activo: true, createdAt: new Date() },
+    { id: '5', nombre: 'Cursos Especializados', icono: '🔬', descripcion: 'Formación técnica y profesional', color: '#ec4899', activo: true, createdAt: new Date() }
+  ]);
+  
+  const [newService, setNewService] = useState({
+    nombre: '',
+    icono: '📦',
+    descripcion: '',
+    color: '#6366f1'
+  });
+
+  const iconosDisponibles = ['📚', '🎓', '🏛️', '💼', '🔬', '📦', '🎯', '🚀', '💡', '🏆', '🌟', '⚡', '🔥', '💻', '🎨', '🏅'];
+
+  const handleCreateService = () => {
+    if (!newService.nombre.trim()) {
+      alert('El nombre del servicio es obligatorio');
+      return;
+    }
+
+    const nuevoServicio: Servicio = {
+      id: `srv_${Date.now()}`,
+      nombre: newService.nombre,
+      icono: newService.icono,
+      descripcion: newService.descripcion,
+      color: newService.color,
+      activo: true,
+      createdAt: new Date()
+    };
+
+    setServiciosDisponibles([...serviciosDisponibles, nuevoServicio]);
+    setFormData({ ...formData, servicio: nuevoServicio.nombre });
+    setShowNewServiceModal(false);
+    
+    // Resetear formulario
+    setNewService({
+      nombre: '',
+      icono: '📦',
+      descripcion: '',
+      color: '#6366f1'
+    });
+
+    // TODO: En producción, guardar en la base de datos
+    console.log('Nuevo servicio creado:', nuevoServicio);
+  };
 
   const update=(field:keyof Course,value:any)=>setFormData(p=>({...p,[field]:value}));
   const updateArr=(field:'objectives'|'requirements',i:number,val:string)=>{const arr=[...formData[field]];arr[i]=val;update(field,arr)};
@@ -124,9 +177,37 @@ const CourseEditor:React.FC<CourseEditorProps>=({course,onSave,onCancel})=>{
                 <div className={styles.formGroup}><label>Título del curso *</label><input value={formData.title} onChange={e=>update('title',e.target.value)} placeholder='Ej: Cálculo Diferencial' required/></div>
                 <div className={styles.formGroup}><label>Descripción *</label><textarea rows={4} value={formData.description} onChange={e=>update('description',e.target.value)} placeholder='Describe de qué trata el curso...' required/></div>
                 <div className={styles.formRow}>
+                  <div className={styles.formGroup}>
+                    <label>Servicio/Producto *</label>
+                    <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-end' }}>
+                      <select 
+                        value={formData.servicio} 
+                        onChange={e => {
+                          if (e.target.value === '__crear_nuevo__') {
+                            setShowNewServiceModal(true);
+                          } else {
+                            update('servicio', e.target.value);
+                          }
+                        }}
+                        style={{ flex: 1 }}
+                        required
+                      >
+                        {serviciosDisponibles.filter((s: Servicio) => s.activo).map((servicio: Servicio) => (
+                          <option key={servicio.id} value={servicio.nombre}>{servicio.icono} {servicio.nombre}</option>
+                        ))}
+                        <option value="__crear_nuevo__">➕ Crear Nuevo Servicio...</option>
+                      </select>
+                      <button type="button" onClick={() => setShowNewServiceModal(true)} style={{ padding: '0.5rem 1rem', background: '#6366f1', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '0.875rem', fontWeight: '600', whiteSpace: 'nowrap' }}>+ Nuevo</button>
+                    </div>
+                    {serviciosDisponibles.find((s: Servicio) => s.nombre === formData.servicio) && (
+                      <small style={{ color: '#6b7280', fontSize: '0.75rem', marginTop: '0.25rem', display: 'block' }}>
+                        {serviciosDisponibles.find((s: Servicio) => s.nombre === formData.servicio)?.descripcion}
+                      </small>
+                    )}
+                  </div>
                   <div className={styles.formGroup}><label>Categoría *</label><select value={formData.category} onChange={e=>update('category',e.target.value)} required><option value=''>Selecciona una categoría</option>{categories.map(c=><option key={c.value} value={c.value}>{c.label}</option>)}</select></div>
-                  <div className={styles.formGroup}><label>Estado</label><select value={formData.status} onChange={e=>update('status',e.target.value)}><option value='draft'>Borrador</option><option value='active'>Activo</option><option value='archived'>Archivado</option></select></div>
                 </div>
+                <div className={styles.formGroup}><label>Estado</label><select value={formData.status} onChange={e=>update('status',e.target.value)}><option value='draft'>Borrador</option><option value='active'>Activo</option><option value='archived'>Archivado</option></select></div>
                 <div className={styles.formGroup}><label>Imagen del curso</label><div className={styles.imageUpload}><input value={formData.image} onChange={e=>update('image',e.target.value)} placeholder='URL de la imagen o sube una imagen'/><button type='button' className={styles.uploadBtn}><Upload size={14}/> Subir</button></div>{formData.image && <div className={styles.imagePreview}><img src={formData.image} alt='Preview'/></div>}</div>
               </div>
               <div className={styles.formSection}>
@@ -200,6 +281,177 @@ const CourseEditor:React.FC<CourseEditorProps>=({course,onSave,onCancel})=>{
           </div>
         )}
       </div>
+
+      {/* Modal para Crear Nuevo Servicio */}
+      {showNewServiceModal && (
+        <div style={{
+          position: 'fixed',
+          inset: 0,
+          background: 'rgba(0, 0, 0, 0.7)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 2000,
+          padding: '2rem'
+        }}>
+          <div style={{
+            background: '#ffffff',
+            borderRadius: '16px',
+            maxWidth: '500px',
+            width: '100%',
+            padding: '2rem',
+            boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)'
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+              <h2 style={{ margin: 0, fontSize: '1.5rem', color: '#1f2937' }}>Crear Nuevo Servicio</h2>
+              <button
+                onClick={() => setShowNewServiceModal(false)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  padding: '0.5rem',
+                  color: '#6b7280'
+                }}
+              >
+                <X size={24} />
+              </button>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <div>
+                <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: '600', color: '#374151' }}>
+                  Nombre del Servicio *
+                </label>
+                <input
+                  type="text"
+                  value={newService.nombre}
+                  onChange={(e) => setNewService({ ...newService, nombre: e.target.value })}
+                  placeholder="Ej: Preparación ICFES"
+                  style={{
+                    width: '100%',
+                    padding: '0.75rem',
+                    border: '1px solid #d1d5db',
+                    borderRadius: '8px',
+                    fontSize: '0.875rem'
+                  }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: '600', color: '#374151' }}>
+                  Descripción
+                </label>
+                <textarea
+                  value={newService.descripcion}
+                  onChange={(e) => setNewService({ ...newService, descripcion: e.target.value })}
+                  placeholder="Describe brevemente este servicio..."
+                  rows={3}
+                  style={{
+                    width: '100%',
+                    padding: '0.75rem',
+                    border: '1px solid #d1d5db',
+                    borderRadius: '8px',
+                    fontSize: '0.875rem',
+                    resize: 'vertical'
+                  }}
+                />
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                <div>
+                  <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: '600', color: '#374151' }}>
+                    Icono
+                  </label>
+                  <select
+                    value={newService.icono}
+                    onChange={(e) => setNewService({ ...newService, icono: e.target.value })}
+                    style={{
+                      width: '100%',
+                      padding: '0.75rem',
+                      border: '1px solid #d1d5db',
+                      borderRadius: '8px',
+                      fontSize: '1.25rem'
+                    }}
+                  >
+                    {iconosDisponibles.map(icono => (
+                      <option key={icono} value={icono}>{icono}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: '600', color: '#374151' }}>
+                    Color
+                  </label>
+                  <input
+                    type="color"
+                    value={newService.color}
+                    onChange={(e) => setNewService({ ...newService, color: e.target.value })}
+                    style={{
+                      width: '100%',
+                      height: '42px',
+                      border: '1px solid #d1d5db',
+                      borderRadius: '8px',
+                      cursor: 'pointer'
+                    }}
+                  />
+                </div>
+              </div>
+
+              <div style={{
+                marginTop: '0.5rem',
+                padding: '1rem',
+                background: '#f3f4f6',
+                borderRadius: '8px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.75rem'
+              }}>
+                <span style={{ fontSize: '2rem' }}>{newService.icono}</span>
+                <div>
+                  <div style={{ fontWeight: '600', color: '#1f2937' }}>{newService.nombre || 'Nombre del servicio'}</div>
+                  <div style={{ fontSize: '0.75rem', color: '#6b7280' }}>{newService.descripcion || 'Sin descripción'}</div>
+                </div>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', gap: '0.75rem', marginTop: '1.5rem' }}>
+              <button
+                onClick={() => setShowNewServiceModal(false)}
+                style={{
+                  flex: 1,
+                  padding: '0.75rem',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '8px',
+                  background: 'white',
+                  color: '#374151',
+                  fontWeight: '600',
+                  cursor: 'pointer'
+                }}
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleCreateService}
+                disabled={!newService.nombre.trim()}
+                style={{
+                  flex: 1,
+                  padding: '0.75rem',
+                  border: 'none',
+                  borderRadius: '8px',
+                  background: newService.nombre.trim() ? '#6366f1' : '#d1d5db',
+                  color: 'white',
+                  fontWeight: '600',
+                  cursor: newService.nombre.trim() ? 'pointer' : 'not-allowed'
+                }}
+              >
+                Crear Servicio
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

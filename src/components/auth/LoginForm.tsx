@@ -137,18 +137,12 @@ const LoginForm = () => {
                   👨‍🎓 Estudiante
                 </button>
                 <button 
-                  className="demo-button teacher"
-                  onClick={() => handleDemoLogin('teacher')}
-                  disabled={loading}
-                >
-                  👨‍🏫 Profesor
-                </button>
-                <button 
                   className="demo-button admin"
                   onClick={() => handleDemoLogin('admin')}
                   disabled={loading}
                 >
-                  👨‍💼 Admin
+                  👨‍🏫 Administrador
+                  👨‍🏫 Administrador
                 </button>
               </div>
             </div>

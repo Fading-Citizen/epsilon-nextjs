@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
-import TeacherDashboard from '@/components/teacher/TeacherDashboard_main'
+import AdminDashboard from '@/components/admin/AdminDashboard_main'
 
 export default async function TeacherPage() {
   const supabase = await createClient()
@@ -10,5 +10,5 @@ export default async function TeacherPage() {
     redirect('/login')
   }
 
-  return <TeacherDashboard user={user} />
+  return <AdminDashboard user={user} />
 }

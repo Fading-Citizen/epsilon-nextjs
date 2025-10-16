@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
 
-export type UserRole = 'admin' | 'teacher' | 'student' | null;
+export type UserRole = 'admin' | 'student' | null;
 
 interface UserProfile {
   id: string;
@@ -44,7 +44,7 @@ export function useUserRole() {
           return;
         }
 
-        // If not in profiles, check if they are a teacher
+        // If not in profiles, check if they are an admin (teacher)
         const { data: teacher, error: teacherError } = await supabase
           .from('teachers')
           .select('id, name, email')
@@ -56,10 +56,10 @@ export function useUserRole() {
             id: teacher.id,
             email: teacher.email,
             full_name: teacher.name,
-            role: 'teacher'
+            role: 'admin'
           };
           setUserProfile(teacherProfile);
-          setUserRole('teacher');
+          setUserRole('admin');
           setLoading(false);
           return;
         }
@@ -110,7 +110,7 @@ export function useUserRole() {
   }, []);
 
   const isAdmin = userRole === 'admin';
-  const isTeacher = userRole === 'teacher';
+  const isTeacher = userRole === 'admin'; // Alias for backwards compatibility
   const isStudent = userRole === 'student';
 
   const hasRole = (requiredRole: UserRole | UserRole[]) => {
