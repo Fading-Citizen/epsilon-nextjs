@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/lib/auth/AuthContext";
 import { ThemeProvider } from "@/themes/ThemeContext";
+import SkipModeBanner from "@/components/common/SkipModeBanner";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -31,6 +32,7 @@ export default function RootLayout({
       >
         <ThemeProvider>
           <AuthProvider>
+            <SkipModeBanner />
             {children}
           </AuthProvider>
         </ThemeProvider>

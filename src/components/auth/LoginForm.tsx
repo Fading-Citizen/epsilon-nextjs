@@ -13,6 +13,27 @@ const LoginForm = () => {
   const router = useRouter();
   const { signIn } = useAuth();
 
+  // Detectar si el modo skip está habilitado
+  const skipAuthEnabled = process.env.NEXT_PUBLIC_SKIP_AUTH === 'true';
+
+  // Función para skip directo sin base de datos
+  const handleSkipLogin = (role: 'student' | 'admin') => {
+    console.log(`🚀 SKIP MODE: Accediendo como ${role} sin base de datos`);
+    
+    // Guardar en localStorage para que el resto de la app sepa que estamos en modo skip
+    localStorage.setItem('skipMode', 'true');
+    localStorage.setItem('skipRole', role);
+    localStorage.setItem('skipUser', JSON.stringify({
+      id: `skip-${role}-${Date.now()}`,
+      email: `${role}@skip.local`,
+      role: role,
+      name: role === 'admin' ? 'Admin Demo' : 'Estudiante Demo'
+    }));
+    
+    // Redirigir según el rol
+    router.push(`/${role}`);
+  };
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -142,10 +163,36 @@ const LoginForm = () => {
                   disabled={loading}
                 >
                   👨‍🏫 Administrador
-                  👨‍🏫 Administrador
                 </button>
               </div>
             </div>
+
+            {/* Modo Skip - Solo visible si está habilitado */}
+            {skipAuthEnabled && (
+              <div className="skip-section">
+                <div className="skip-warning">
+                  ⚠️ Modo Desarrollo - Sin Base de Datos
+                </div>
+                <p className="skip-title">Acceso Directo (Skip):</p>
+                <div className="skip-buttons">
+                  <button 
+                    className="skip-button student"
+                    onClick={() => handleSkipLogin('student')}
+                  >
+                    ⚡ Skip Estudiante
+                  </button>
+                  <button 
+                    className="skip-button admin"
+                    onClick={() => handleSkipLogin('admin')}
+                  >
+                    ⚡ Skip Admin
+                  </button>
+                </div>
+                <p className="skip-note">
+                  Estos botones te llevan directamente sin verificar credenciales
+                </p>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -326,6 +373,84 @@ const StyledWrapper = styled.div`
   .demo-button:disabled {
     opacity: 0.5;
     cursor: not-allowed;
+  }
+
+  /* Skip Section Styles */
+  .skip-section {
+    border-top: 2px dashed #ff9800;
+    padding-top: 20px;
+    margin-top: 20px;
+    background: #fff3e0;
+    padding: 20px;
+    border-radius: 10px;
+  }
+
+  .skip-warning {
+    background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);
+    color: white;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 15px;
+    text-align: center;
+  }
+
+  .skip-title {
+    color: #e65100;
+    margin-bottom: 10px;
+    font-size: 14px;
+    font-weight: 600;
+  }
+
+  .skip-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+
+  .skip-button {
+    padding: 12px 15px;
+    border: 2px solid;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    background: white;
+  }
+
+  .skip-button.student {
+    border-color: #4CAF50;
+    color: #4CAF50;
+  }
+
+  .skip-button.student:hover {
+    background: #4CAF50;
+    color: white;
+    transform: scale(1.02);
+    box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+  }
+
+  .skip-button.admin {
+    border-color: #FF5722;
+    color: #FF5722;
+  }
+
+  .skip-button.admin:hover {
+    background: #FF5722;
+    color: white;
+    transform: scale(1.02);
+    box-shadow: 0 4px 12px rgba(255, 87, 34, 0.3);
+  }
+
+  .skip-note {
+    color: #e65100;
+    font-size: 11px;
+    text-align: center;
+    font-style: italic;
+    margin: 0;
   }
 `;
 

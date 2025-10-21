@@ -423,6 +423,7 @@ const SimulacroBuilder: React.FC<SimulacroBuilderProps> = ({
             onImageUpload={handleImageUpload}
             serviciosDisponibles={serviciosDisponibles}
             onCreateNewService={() => setShowNewServiceModal(true)}
+            questions={questions}
           />
         )}
 
@@ -660,7 +661,8 @@ const SettingsTab: React.FC<{
   onImageUpload: (file: File, type: any) => Promise<string>;
   serviciosDisponibles: Servicio[];
   onCreateNewService: () => void;
-}> = ({ settings, setSettings, onImageUpload, serviciosDisponibles, onCreateNewService }) => {
+  questions: SimulacroQuestion[];
+}> = ({ settings, setSettings, onImageUpload, serviciosDisponibles, onCreateNewService, questions }) => {
   const thumbnailInputRef = useRef<HTMLInputElement>(null);
 
   const handleThumbnailUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {

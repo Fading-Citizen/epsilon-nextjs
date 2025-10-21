@@ -25,8 +25,18 @@ function AuthProvider({ children }: AuthProviderProps) {
   const [loading, setLoading] = useState(true);
   
   const supabase = createClient();
+  
+  // Detectar si el modo skip está habilitado
+  const skipAuthEnabled = process.env.NEXT_PUBLIC_SKIP_AUTH === 'true';
 
   useEffect(() => {
+    // Si skip mode está activo, no hacer llamadas a Supabase
+    if (skipAuthEnabled) {
+      console.log('🚀 Skip Mode: AuthContext bypassed');
+      setLoading(false);
+      return;
+    }
+
     // Get initial session
     const getSession = async () => {
       try {
@@ -52,9 +62,20 @@ function AuthProvider({ children }: AuthProviderProps) {
     });
 
     return () => subscription.unsubscribe();
-  }, [supabase.auth]);
+  }, [supabase.auth, skipAuthEnabled]);
 
   const signIn = async (email: string, password: string) => {
+    // Si skip mode está activo, retornar éxito falso para que use los botones de skip
+    if (skipAuthEnabled) {
+      console.log('🚀 Skip Mode: Use los botones de Skip en lugar del login normal');
+      return { 
+        data: null, 
+        error: { 
+          message: 'Modo Skip activo. Por favor usa los botones "⚡ Skip Estudiante" o "⚡ Skip Admin" para acceder.' 
+        } 
+      };
+    }
+
     try {
       const result = await supabase.auth.signInWithPassword({
         email,
@@ -73,6 +94,14 @@ function AuthProvider({ children }: AuthProviderProps) {
   };
 
   const signUp = async (email: string, password: string, metadata = {}) => {
+    // Si skip mode está activo, no permitir registro
+    if (skipAuthEnabled) {
+      return { 
+        data: null, 
+        error: { message: 'Registro no disponible en modo Skip' } 
+      };
+    }
+
     try {
       const result = await supabase.auth.signUp({
         email,
@@ -94,6 +123,14 @@ function AuthProvider({ children }: AuthProviderProps) {
   };
 
   const signOut = async () => {
+    // Si skip mode está activo, limpiar localStorage
+    if (skipAuthEnabled) {
+      localStorage.removeItem('skipMode');
+      localStorage.removeItem('skipRole');
+      localStorage.removeItem('skipUser');
+      return;
+    }
+
     try {
       await supabase.auth.signOut();
     } catch (err) {
