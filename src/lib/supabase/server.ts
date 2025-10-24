@@ -2,20 +2,17 @@ import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 
 export async function createClient() {
-  // En modo skip, usar valores dummy
-  const skipMode = process.env.NEXT_PUBLIC_SKIP_AUTH === 'true';
+  // Check if skip mode is enabled OR if credentials are missing (fallback to skip mode)
+  const skipMode = process.env.NEXT_PUBLIC_SKIP_AUTH === 'true' || 
+                   !process.env.NEXT_PUBLIC_SUPABASE_URL || 
+                   !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 
-    (skipMode ? 'https://dummy.supabase.co' : '');
-  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 
-    (skipMode ? 'dummy-key-for-skip-mode-server' : '');
+  // Use dummy values if in skip mode or credentials are missing
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://dummy.supabase.co';
+  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'dummy-key-for-skip-mode-server';
 
-  if (!supabaseUrl || !supabaseKey) {
-    if (skipMode) {
-      console.log('🚀 Skip Mode: Server client usando valores dummy');
-    } else {
-      throw new Error('Supabase URL and Key are required when not in skip mode');
-    }
+  if (skipMode) {
+    console.log('⚠️ Supabase credentials not configured. Skip mode enabled.');
   }
 
   const cookieStore = await cookies()
