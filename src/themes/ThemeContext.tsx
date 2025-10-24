@@ -6,7 +6,11 @@ import { colors, gradients } from './colors';
 interface ThemeContextType {
   isDarkMode: boolean;
   toggleTheme: () => void;
-  theme: any;
+  theme: {
+    colors: typeof colors & { current: typeof colors.light | typeof colors.dark };
+    gradients: typeof gradients;
+    isDarkMode: boolean;
+  };
   getGradient: (name: string) => string;
 }
 
@@ -53,8 +57,10 @@ export const ThemeProvider = ({ children }: ThemeProviderProps) => {
     root.style.setProperty('--text-primary', theme.text.primary);
     root.style.setProperty('--text-secondary', theme.text.secondary);
     root.style.setProperty('--text-tertiary', theme.text.tertiary);
-    root.style.setProperty('--border-color', theme.border);
-    root.style.setProperty('--shadow-color', theme.shadow);
+    root.style.setProperty('--border-primary', theme.border.primary);
+    root.style.setProperty('--border-secondary', theme.border.secondary);
+    root.style.setProperty('--border-focus', theme.border.focus);
+    // Note: shadow would need to be defined in colors.ts if needed
   }, [isDarkMode]);
 
   const toggleTheme = () => {
@@ -73,9 +79,9 @@ export const ThemeProvider = ({ children }: ThemeProviderProps) => {
   };
 
   const getGradient = (category: string) => {
-    const mode = isDarkMode ? 'dark' : 'light';
-    const gradientCategory = gradients[category as keyof typeof gradients];
-    return gradientCategory ? gradientCategory[mode] : gradients.programacion[mode];
+    // All gradients in colors.ts are strings, not objects with dark/light modes
+    const gradient = gradients[category as keyof typeof gradients];
+    return gradient || gradients.primary;
   };
 
   const value = {

@@ -210,7 +210,7 @@ export default function UserManagement() {
 
         <select 
           value={filterActivo} 
-          onChange={(e) => setFilterActivo(e.target.value as any)}
+          onChange={(e) => setFilterActivo(e.target.value as 'todos' | 'activos' | 'inactivos')}
           style={styles.select}
         >
           <option value="todos">Todos</option>

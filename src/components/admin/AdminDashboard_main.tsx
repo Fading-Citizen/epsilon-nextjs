@@ -111,7 +111,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user: currentUser }) =>
   // Helper function for consistent card styling
   const getCardStyle = (isActive = false) => ({
     background: theme.colors.current.background.secondary,
-    border: `1px solid ${theme.colors.current.border}`,
+    border: `1px solid ${theme.colors.current.border.primary}`,
     borderRadius: '16px',
     padding: '2rem',
     display: 'flex',
@@ -167,7 +167,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user: currentUser }) =>
       }}>
         <div style={{
           background: theme.colors.current.background.secondary,
-          border: `1px solid ${theme.colors.current.border}`,
+          border: `1px solid ${theme.colors.current.border.primary}`,
           borderRadius: '16px',
           padding: '2rem',
           display: 'flex',
@@ -209,7 +209,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user: currentUser }) =>
         
         <div style={{
           background: theme.colors.current.background.secondary,
-          border: `1px solid ${theme.colors.current.border}`,
+          border: `1px solid ${theme.colors.current.border.primary}`,
           borderRadius: '16px',
           padding: '2rem',
           display: 'flex',
@@ -335,7 +335,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user: currentUser }) =>
         
         <div style={{
           background: theme.colors.current.background.secondary,
-          border: `1px solid ${theme.colors.current.border}`,
+          border: `1px solid ${theme.colors.current.border.primary}`,
           borderRadius: '16px',
           padding: '2rem',
           display: 'flex',
@@ -377,7 +377,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user: currentUser }) =>
         
         <div style={{
           background: theme.colors.current.background.secondary,
-          border: `1px solid ${theme.colors.current.border}`,
+          border: `1px solid ${theme.colors.current.border.primary}`,
           borderRadius: '16px',
           padding: '2rem',
           display: 'flex',
@@ -672,7 +672,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user: currentUser }) =>
         <h2 style={{ margin: 0, color: theme.colors.current.text.primary }}>Cursos</h2>
         <div style={{ marginLeft: 'auto', display: 'flex', gap: '0.5rem' }}>
           <button onClick={() => setCoursesViewMode(v => v === 'cards' ? 'list' : 'cards')}
-            style={{ padding: '0.5rem 1rem', background: theme.colors.current.background.secondary, border: `1px solid ${theme.colors.current.border}`, borderRadius: 8, cursor: 'pointer', color: theme.colors.current.text.primary }}>
+            style={{ padding: '0.5rem 1rem', background: theme.colors.current.background.secondary, border: `1px solid ${theme.colors.current.border.primary}`, borderRadius: 8, cursor: 'pointer', color: theme.colors.current.text.primary }}>
             {coursesViewMode === 'cards' ? 'Vista Lista' : 'Vista Tarjetas'}
           </button>
           <button onClick={() => { setEditingCourse(null); setShowCourseEditor(true); }}
@@ -683,23 +683,23 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user: currentUser }) =>
       </div>
       <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
         <input placeholder="Buscar" value={courseFilters.search} onChange={e => setCourseFilters(f=>({...f,search:e.target.value}))}
-          style={{ padding: '0.5rem 0.75rem', borderRadius: 8, border: `1px solid ${theme.colors.current.border}`, background: theme.colors.current.background.secondary, color: theme.colors.current.text.primary }} />
+          style={{ padding: '0.5rem 0.75rem', borderRadius: 8, border: `1px solid ${theme.colors.current.border.primary}`, background: theme.colors.current.background.secondary, color: theme.colors.current.text.primary }} />
         <select value={courseFilters.category} onChange={e=>setCourseFilters(f=>({...f,category:e.target.value}))}
-          style={{ padding: '0.5rem', borderRadius: 8, border: `1px solid ${theme.colors.current.border}`, background: theme.colors.current.background.secondary, color: theme.colors.current.text.primary }}>
+          style={{ padding: '0.5rem', borderRadius: 8, border: `1px solid ${theme.colors.current.border.primary}`, background: theme.colors.current.background.secondary, color: theme.colors.current.text.primary }}>
           <option value="all">Todas Categorías</option>
           <option value="matematicas">Matemáticas</option>
           <option value="programacion">Programación</option>
           <option value="fisica">Física</option>
         </select>
         <select value={courseFilters.status} onChange={e=>setCourseFilters(f=>({...f,status:e.target.value}))}
-          style={{ padding: '0.5rem', borderRadius: 8, border: `1px solid ${theme.colors.current.border}`, background: theme.colors.current.background.secondary, color: theme.colors.current.text.primary }}>
+          style={{ padding: '0.5rem', borderRadius: 8, border: `1px solid ${theme.colors.current.border.primary}`, background: theme.colors.current.background.secondary, color: theme.colors.current.text.primary }}>
           <option value="all">Todos Estados</option>
           <option value="active">Activos</option>
           <option value="draft">Borradores</option>
           <option value="archived">Archivados</option>
         </select>
         <select value={courseFilters.sortBy} onChange={e=>setCourseFilters(f=>({...f,sortBy:e.target.value}))}
-          style={{ padding: '0.5rem', borderRadius: 8, border: `1px solid ${theme.colors.current.border}`, background: theme.colors.current.background.secondary, color: theme.colors.current.text.primary }}>
+          style={{ padding: '0.5rem', borderRadius: 8, border: `1px solid ${theme.colors.current.border.primary}`, background: theme.colors.current.background.secondary, color: theme.colors.current.text.primary }}>
           <option value="date">Fecha</option>
           <option value="name">Nombre</option>
           <option value="students">Estudiantes</option>
@@ -735,7 +735,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user: currentUser }) =>
         </div>
         <div style={{ marginLeft:'auto', display:'flex', gap:'0.5rem' }}>
           <button onClick={()=> setEvaluationsViewMode(v=> v==='cards' ? 'list' : 'cards')}
-            style={{ padding:'0.5rem 1rem', background: theme.colors.current.background.secondary, border:`1px solid ${theme.colors.current.border}`, borderRadius:8, cursor:'pointer', color: theme.colors.current.text.primary }}>
+            style={{ padding:'0.5rem 1rem', background: theme.colors.current.background.secondary, border:`1px solid ${theme.colors.current.border.primary}`, borderRadius:8, cursor:'pointer', color: theme.colors.current.text.primary }}>
             {evaluationsViewMode==='cards' ? 'Vista Lista' : 'Vista Tarjetas'}
           </button>
           <button onClick={()=> { setEditingEvaluation(null); setShowQuizBuilder(true); }}
@@ -746,22 +746,22 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user: currentUser }) =>
       </div>
       <div style={{ display:'flex', gap:'1rem', flexWrap:'wrap' }}>
         <input placeholder="Buscar quiz..." value={evaluationFilters.search} onChange={e=>setEvaluationFilters(f=>({...f,search:e.target.value}))}
-          style={{ padding:'0.5rem 0.75rem', borderRadius:8, border:`1px solid ${theme.colors.current.border}`, background: theme.colors.current.background.secondary, color: theme.colors.current.text.primary }} />
+          style={{ padding:'0.5rem 0.75rem', borderRadius:8, border:`1px solid ${theme.colors.current.border.primary}`, background: theme.colors.current.background.secondary, color: theme.colors.current.text.primary }} />
         <select value={evaluationFilters.course} onChange={e=>setEvaluationFilters(f=>({...f,course:e.target.value}))}
-          style={{ padding:'0.5rem', borderRadius:8, border:`1px solid ${theme.colors.current.border}`, background: theme.colors.current.background.secondary, color: theme.colors.current.text.primary }}>
+          style={{ padding:'0.5rem', borderRadius:8, border:`1px solid ${theme.colors.current.border.primary}`, background: theme.colors.current.background.secondary, color: theme.colors.current.text.primary }}>
           <option value="all">Todos los Cursos</option>
           <option value="Cálculo Diferencial">Cálculo Diferencial</option>
           <option value="Programación Python">Programación Python</option>
         </select>
         <select value={evaluationFilters.status} onChange={e=>setEvaluationFilters(f=>({...f,status:e.target.value}))}
-          style={{ padding:'0.5rem', borderRadius:8, border:`1px solid ${theme.colors.current.border}`, background: theme.colors.current.background.secondary, color: theme.colors.current.text.primary }}>
+          style={{ padding:'0.5rem', borderRadius:8, border:`1px solid ${theme.colors.current.border.primary}`, background: theme.colors.current.background.secondary, color: theme.colors.current.text.primary }}>
           <option value="all">Todos Estados</option>
           <option value="draft">Borrador</option>
           <option value="active">Activo</option>
           <option value="finished">Finalizado</option>
         </select>
         <select value={evaluationFilters.sortBy} onChange={e=>setEvaluationFilters(f=>({...f,sortBy:e.target.value}))}
-          style={{ padding:'0.5rem', borderRadius:8, border:`1px solid ${theme.colors.current.border}`, background: theme.colors.current.background.secondary, color: theme.colors.current.text.primary }}>
+          style={{ padding:'0.5rem', borderRadius:8, border:`1px solid ${theme.colors.current.border.primary}`, background: theme.colors.current.background.secondary, color: theme.colors.current.text.primary }}>
           <option value="date">Fecha</option>
           <option value="name">Nombre</option>
           <option value="course">Curso</option>
@@ -798,7 +798,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user: currentUser }) =>
         </div>
         <div style={{ marginLeft:'auto', display:'flex', gap:'0.5rem' }}>
           <button onClick={()=> setSimulacrosViewMode(v=> v==='cards' ? 'list' : 'cards')}
-            style={{ padding:'0.5rem 1rem', background: theme.colors.current.background.secondary, border:`1px solid ${theme.colors.current.border}`, borderRadius:8, cursor:'pointer', color: theme.colors.current.text.primary }}>
+            style={{ padding:'0.5rem 1rem', background: theme.colors.current.background.secondary, border:`1px solid ${theme.colors.current.border.primary}`, borderRadius:8, cursor:'pointer', color: theme.colors.current.text.primary }}>
             {simulacrosViewMode==='cards' ? 'Vista Lista' : 'Vista Tarjetas'}
           </button>
           <button onClick={()=> { setEditingSimulacro(null); setShowSimulacroBuilder(true); }}
@@ -811,7 +811,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user: currentUser }) =>
         padding:'1rem', 
         background: theme.colors.current.background.secondary, 
         borderRadius:8, 
-        border:`1px solid ${theme.colors.current.border}`,
+        border:`1px solid ${theme.colors.current.border.primary}`,
         display:'flex',
         gap:'2rem',
         flexWrap:'wrap'
@@ -835,20 +835,20 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user: currentUser }) =>
       </div>
       <div style={{ display:'flex', gap:'1rem', flexWrap:'wrap' }}>
         <input placeholder="Buscar simulacro..." 
-          style={{ flex:1, minWidth:'200px', padding:'0.5rem 0.75rem', borderRadius:8, border:`1px solid ${theme.colors.current.border}`, background: theme.colors.current.background.secondary, color: theme.colors.current.text.primary }} />
-        <select style={{ padding:'0.5rem', borderRadius:8, border:`1px solid ${theme.colors.current.border}`, background: theme.colors.current.background.secondary, color: theme.colors.current.text.primary }}>
+          style={{ flex:1, minWidth:'200px', padding:'0.5rem 0.75rem', borderRadius:8, border:`1px solid ${theme.colors.current.border.primary}`, background: theme.colors.current.background.secondary, color: theme.colors.current.text.primary }} />
+        <select style={{ padding:'0.5rem', borderRadius:8, border:`1px solid ${theme.colors.current.border.primary}`, background: theme.colors.current.background.secondary, color: theme.colors.current.text.primary }}>
           <option value="all">Todas las Categorías</option>
           <option value="admision">Admisión Universitaria</option>
           <option value="certificacion">Certificaciones</option>
           <option value="competencias">Competencias</option>
         </select>
-        <select style={{ padding:'0.5rem', borderRadius:8, border:`1px solid ${theme.colors.current.border}`, background: theme.colors.current.background.secondary, color: theme.colors.current.text.primary }}>
+        <select style={{ padding:'0.5rem', borderRadius:8, border:`1px solid ${theme.colors.current.border.primary}`, background: theme.colors.current.background.secondary, color: theme.colors.current.text.primary }}>
           <option value="all">Todos los Niveles</option>
           <option value="free">Muestra (Free)</option>
           <option value="basic">Basic</option>
           <option value="premium">Premium</option>
         </select>
-        <select style={{ padding:'0.5rem', borderRadius:8, border:`1px solid ${theme.colors.current.border}`, background: theme.colors.current.background.secondary, color: theme.colors.current.text.primary }}>
+        <select style={{ padding:'0.5rem', borderRadius:8, border:`1px solid ${theme.colors.current.border.primary}`, background: theme.colors.current.background.secondary, color: theme.colors.current.text.primary }}>
           <option value="all">Todos Estados</option>
           <option value="published">Publicado</option>
           <option value="draft">Borrador</option>
@@ -865,7 +865,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user: currentUser }) =>
         ].map(sim => (
           <div key={sim.id} style={{
             background: theme.colors.current.background.secondary,
-            border:`1px solid ${theme.colors.current.border}`,
+            border:`1px solid ${theme.colors.current.border.primary}`,
             borderRadius:12,
             padding:'1.5rem',
             cursor:'pointer',
@@ -907,7 +907,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user: currentUser }) =>
                 style={{ flex:1, padding:'0.5rem', background:'#3b82f6', color:'white', border:'none', borderRadius:6, cursor:'pointer' }}>
                 Editar
               </button>
-              <button style={{ padding:'0.5rem 0.75rem', background: theme.colors.current.background.tertiary, border:`1px solid ${theme.colors.current.border}`, borderRadius:6, cursor:'pointer' }}>
+              <button style={{ padding:'0.5rem 0.75rem', background: theme.colors.current.background.tertiary, border:`1px solid ${theme.colors.current.border.primary}`, borderRadius:6, cursor:'pointer' }}>
                 📊
               </button>
             </div>
@@ -1182,7 +1182,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user: currentUser }) =>
         alignItems: 'center',
         padding: '1.5rem 2rem',
         background: theme.colors.current.background.secondary,
-        borderBottom: `1px solid ${theme.colors.current.border}`
+        borderBottom: `1px solid ${theme.colors.current.border.primary}`
       }}>
         <div>
           <h1 style={{ margin: '0 0 0.5rem 0', fontSize: '1.5rem', fontWeight: 'bold', color: theme.colors.current.text.primary }}>Panel de Instructor</h1>
@@ -1192,14 +1192,14 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user: currentUser }) =>
           <button style={{
             position: 'relative',
             background: theme.colors.current.background.tertiary,
-            border: `1px solid ${theme.colors.current.border}`,
+            border: `1px solid ${theme.colors.current.border.primary}`,
             borderRadius: '8px',
             padding: '0.75rem',
             color: theme.colors.current.text.primary,
             cursor: 'pointer',
             transition: 'all 0.3s ease'
           }} onMouseOver={(e) => {
-            e.currentTarget.style.background = theme.colors.current.border;
+            e.currentTarget.style.background = theme.colors.current.border.primary;
           }} onMouseOut={(e) => {
             e.currentTarget.style.background = theme.colors.current.background.tertiary;
           }}>
@@ -1226,7 +1226,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user: currentUser }) =>
             onClick={toggleTheme}
             style={{
               background: theme.colors.current.background.tertiary,
-              border: `1px solid ${theme.colors.current.border}`,
+              border: `1px solid ${theme.colors.current.border.primary}`,
               borderRadius: '8px',
               padding: '0.75rem',
               color: theme.colors.current.text.primary,
@@ -1237,7 +1237,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user: currentUser }) =>
               justifyContent: 'center'
             }} 
             onMouseOver={(e) => {
-              e.currentTarget.style.background = theme.colors.current.border;
+              e.currentTarget.style.background = theme.colors.current.border.primary;
             }} 
             onMouseOut={(e) => {
               e.currentTarget.style.background = theme.colors.current.background.tertiary;
@@ -1251,7 +1251,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user: currentUser }) =>
             width: '40px',
             height: '40px',
             background: theme.colors.current.background.tertiary,
-            border: `1px solid ${theme.colors.current.border}`,
+            border: `1px solid ${theme.colors.current.border.primary}`,
             borderRadius: '50%',
             display: 'flex',
             alignItems: 'center',
@@ -1259,7 +1259,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user: currentUser }) =>
             cursor: 'pointer',
             transition: 'all 0.3s ease'
           }} onMouseOver={(e) => {
-            e.currentTarget.style.background = theme.colors.current.border;
+            e.currentTarget.style.background = theme.colors.current.border.primary;
           }} onMouseOut={(e) => {
             e.currentTarget.style.background = theme.colors.current.background.tertiary;
           }}>
@@ -1296,7 +1296,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user: currentUser }) =>
         <nav style={{
           width: '250px',
           background: theme.colors.current.background.secondary,
-          borderRight: `1px solid ${theme.colors.current.border}`,
+          borderRight: `1px solid ${theme.colors.current.border.primary}`,
           padding: '1rem 0'
         }}>
           {navigationItems.map(item => (
@@ -1346,3 +1346,4 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user: currentUser }) =>
 };
 
 export default AdminDashboard;
+

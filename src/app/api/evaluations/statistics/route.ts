@@ -1,5 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { SupabaseClient } from '@supabase/supabase-js';
+
+interface EvaluationResult {
+  student_id: string;
+  total_preguntas: number;
+  respuestas_correctas: number;
+  respuestas_incorrectas: number;
+  respuestas_vacias: number;
+  porcentaje: number;
+  aprobado: boolean;
+  tiempo_inicio: string;
+  tiempo_fin: string;
+  servicio: string;
+  institucion?: string;
+}
 
 /**
  * GET /api/evaluations/statistics
@@ -147,10 +162,10 @@ export async function GET(request: NextRequest) {
       statistics
     });
 
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error en GET /api/evaluations/statistics:', error);
     return NextResponse.json(
-      { error: 'Error interno del servidor', details: error.message },
+      { error: 'Error interno del servidor', details: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
     );
   }
@@ -159,7 +174,7 @@ export async function GET(request: NextRequest) {
 // Funciones auxiliares para obtener estadísticas
 
 async function getStudentStatistics(
-  supabase: any,
+  supabase: SupabaseClient,
   studentId: string,
   fechaInicio?: string | null,
   fechaFin?: string | null
@@ -180,7 +195,7 @@ async function getStudentStatistics(
 }
 
 async function getGroupStatistics(
-  supabase: any,
+  supabase: SupabaseClient,
   groupId: string,
   fechaInicio?: string | null,
   fechaFin?: string | null
@@ -197,17 +212,17 @@ async function getGroupStatistics(
 
   if (error) throw error;
 
-  const stats: any = calculateStatistics(data);
+  const stats = calculateStatistics(data as EvaluationResult[]);
   
   // Agregar estudiantes únicos
-  const uniqueStudents = new Set(data.map((r: any) => r.student_id));
-  stats.total_estudiantes = uniqueStudents.size;
+  const uniqueStudents = new Set((data as EvaluationResult[]).map((r) => r.student_id));
+  (stats as Record<string, unknown>).total_estudiantes = uniqueStudents.size;
 
   return stats;
 }
 
 async function getInstitutionStatistics(
-  supabase: any,
+  supabase: SupabaseClient,
   institucion: string,
   fechaInicio?: string | null,
   fechaFin?: string | null
@@ -224,38 +239,38 @@ async function getInstitutionStatistics(
 
   if (error) throw error;
 
-  const stats: any = calculateStatistics(data);
+  const stats = calculateStatistics(data as EvaluationResult[]);
   
   // Agregar estudiantes únicos y distribución por servicio
-  const uniqueStudents = new Set(data.map((r: any) => r.student_id));
-  stats.total_estudiantes = uniqueStudents.size;
+  const uniqueStudents = new Set((data as EvaluationResult[]).map((r) => r.student_id));
+  (stats as Record<string, unknown>).total_estudiantes = uniqueStudents.size;
 
-  const servicioDistribution: any = {};
-  data.forEach((r: any) => {
+  const servicioDistribution: Record<string, { total: number; promedio: string; suma?: number }> = {};
+  (data as EvaluationResult[]).forEach((r) => {
     if (!servicioDistribution[r.servicio]) {
       servicioDistribution[r.servicio] = {
         total: 0,
-        promedio: 0,
+        promedio: '0',
         suma: 0
       };
     }
     servicioDistribution[r.servicio].total++;
-    servicioDistribution[r.servicio].suma += r.porcentaje;
+    servicioDistribution[r.servicio].suma = (servicioDistribution[r.servicio].suma || 0) + r.porcentaje;
   });
 
   Object.keys(servicioDistribution).forEach(servicio => {
     servicioDistribution[servicio].promedio = 
-      (servicioDistribution[servicio].suma / servicioDistribution[servicio].total).toFixed(2);
+      ((servicioDistribution[servicio].suma || 0) / servicioDistribution[servicio].total).toFixed(2);
     delete servicioDistribution[servicio].suma;
   });
 
-  stats.distribucion_servicios = servicioDistribution;
+  (stats as Record<string, unknown>).distribucion_servicios = servicioDistribution;
 
   return stats;
 }
 
 async function getServiceStatistics(
-  supabase: any,
+  supabase: SupabaseClient,
   servicio: string,
   fechaInicio?: string | null,
   fechaFin?: string | null
@@ -272,14 +287,14 @@ async function getServiceStatistics(
 
   if (error) throw error;
 
-  const stats: any = calculateStatistics(data);
+  const stats = calculateStatistics(data as EvaluationResult[]);
   
   // Agregar estudiantes únicos y top instituciones
-  const uniqueStudents = new Set(data.map((r: any) => r.student_id));
-  stats.total_estudiantes = uniqueStudents.size;
+  const uniqueStudents = new Set((data as EvaluationResult[]).map((r) => r.student_id));
+  (stats as Record<string, unknown>).total_estudiantes = uniqueStudents.size;
 
-  const instituciones: any = {};
-  data.forEach((r: any) => {
+  const instituciones: Record<string, { total: number; suma: number }> = {};
+  (data as EvaluationResult[]).forEach((r) => {
     if (!r.institucion) return;
     
     if (!instituciones[r.institucion]) {
@@ -292,20 +307,20 @@ async function getServiceStatistics(
     instituciones[r.institucion].suma += r.porcentaje;
   });
 
-  stats.top_instituciones = Object.entries(instituciones)
-    .map(([nombre, data]: [string, any]) => ({
+  (stats as Record<string, unknown>).top_instituciones = Object.entries(instituciones)
+    .map(([nombre, instData]) => ({
       institucion: nombre,
-      total_evaluaciones: data.total,
-      promedio: (data.suma / data.total).toFixed(2)
+      total_evaluaciones: instData.total,
+      promedio: (instData.suma / instData.total).toFixed(2)
     }))
-    .sort((a: any, b: any) => parseFloat(b.promedio) - parseFloat(a.promedio))
+    .sort((a, b) => parseFloat(b.promedio) - parseFloat(a.promedio))
     .slice(0, 5);
 
   return stats;
 }
 
 async function getCourseStatistics(
-  supabase: any,
+  supabase: SupabaseClient,
   courseId: string,
   fechaInicio?: string | null,
   fechaFin?: string | null
@@ -322,16 +337,16 @@ async function getCourseStatistics(
 
   if (error) throw error;
 
-  const stats: any = calculateStatistics(data);
+  const stats = calculateStatistics(data as EvaluationResult[]);
   
-  const uniqueStudents = new Set(data.map((r: any) => r.student_id));
-  stats.total_estudiantes = uniqueStudents.size;
+  const uniqueStudents = new Set((data as EvaluationResult[]).map((r) => r.student_id));
+  (stats as Record<string, unknown>).total_estudiantes = uniqueStudents.size;
 
   return stats;
 }
 
 async function getGlobalStatistics(
-  supabase: any,
+  supabase: SupabaseClient,
   fechaInicio?: string | null,
   fechaFin?: string | null
 ) {
@@ -346,14 +361,21 @@ async function getGlobalStatistics(
 
   if (error) throw error;
 
-  const stats: any = calculateStatistics(data);
+  const stats = calculateStatistics(data as EvaluationResult[]);
   
-  const uniqueStudents = new Set(data.map((r: any) => r.student_id));
-  stats.total_estudiantes = uniqueStudents.size;
+  const uniqueStudents = new Set((data as EvaluationResult[]).map((r) => r.student_id));
+  (stats as Record<string, unknown>).total_estudiantes = uniqueStudents.size;
 
   // Distribución por servicio
-  const servicios: any = {};
-  data.forEach((r: any) => {
+  const servicios: Record<string, {
+    total: number;
+    suma: number;
+    correctas: number;
+    incorrectas: number;
+    vacias: number;
+    estudiantes: Set<string>;
+  }> = {};
+  (data as EvaluationResult[]).forEach((r) => {
     if (!servicios[r.servicio]) {
       servicios[r.servicio] = {
         total: 0,
@@ -372,20 +394,20 @@ async function getGlobalStatistics(
     servicios[r.servicio].estudiantes.add(r.student_id);
   });
 
-  stats.por_servicio = Object.entries(servicios).map(([nombre, data]: [string, any]) => ({
+  (stats as Record<string, unknown>).por_servicio = Object.entries(servicios).map(([nombre, servData]) => ({
     servicio: nombre,
-    evaluaciones: data.total,
-    estudiantes: data.estudiantes.size,
-    promedio: (data.suma / data.total).toFixed(2),
-    correctas: data.correctas,
-    incorrectas: data.incorrectas,
-    vacias: data.vacias
+    evaluaciones: servData.total,
+    estudiantes: servData.estudiantes.size,
+    promedio: (servData.suma / servData.total).toFixed(2),
+    correctas: servData.correctas,
+    incorrectas: servData.incorrectas,
+    vacias: servData.vacias
   }));
 
   return stats;
 }
 
-function calculateStatistics(data: any[]) {
+function calculateStatistics(data: EvaluationResult[]) {
   if (!data || data.length === 0) {
     return {
       total_evaluaciones: 0,

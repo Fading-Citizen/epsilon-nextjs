@@ -1572,7 +1572,7 @@ const StudentDashboard = () => {
           marginBottom: '2rem'
         }}>
           <div style={{
-            background: safeTheme.colors.current.background.card,
+            background: safeTheme.colors.current.background.secondary,
             padding: '1.5rem',
             borderRadius: '12px',
             borderLeft: '4px solid #3b82f6'
@@ -1586,7 +1586,7 @@ const StudentDashboard = () => {
           </div>
 
           <div style={{
-            background: safeTheme.colors.current.background.card,
+            background: safeTheme.colors.current.background.secondary,
             padding: '1.5rem',
             borderRadius: '12px',
             borderLeft: '4px solid #10b981'
@@ -1600,7 +1600,7 @@ const StudentDashboard = () => {
           </div>
 
           <div style={{
-            background: safeTheme.colors.current.background.card,
+            background: safeTheme.colors.current.background.secondary,
             padding: '1.5rem',
             borderRadius: '12px',
             borderLeft: '4px solid #f59e0b'
@@ -1620,7 +1620,7 @@ const StudentDashboard = () => {
             <div
               key={informe.id}
               style={{
-                background: safeTheme.colors.current.background.card,
+                background: safeTheme.colors.current.background.secondary,
                 border: `1px solid ${safeTheme.colors.current.border}`,
                 borderRadius: '12px',
                 padding: '1.5rem',
@@ -5745,3 +5745,4 @@ const StudentDashboard = () => {
 };
 
 export default StudentDashboard;
+
